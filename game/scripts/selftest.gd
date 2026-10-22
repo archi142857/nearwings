@@ -41,6 +41,10 @@ func run(main_node: Node) -> void:
 	var view: Rect2 = main.view_rect()
 	_check(scene.grow(0.01).encloses(view), "장면이 화면을 꽉 채운다: 장면 %s, 보이는 곳 %s" % [str(scene), str(view)])
 	_check(view.get_center().distance_to(scene.get_center()) < 1.0, "보이는 곳이 장면 가운데: %s" % str(view.get_center()))
+	if App.args.has("hour"):
+		var want_phase := TimeOfDay.phase(float(App.args["hour"]))
+		_check(main.background.shown.has(want_phase), "시각 %s시 배경: %s를 그려야 하는데 %s" % [App.args["hour"], want_phase, str(main.background.shown)])
+	_check(main.spawner.active_birds().size() <= BirdRules.MAX_BIRDS + 1, "새는 많아야 %d마리 (떠나는 새 하나 더)" % BirdRules.MAX_BIRDS)
 
 	# 3. 화면을 밀어도 장면은 그대로다 (둘러보기 없음)
 	var cam_before: Vector2 = main.camera.position

@@ -77,7 +77,7 @@ func perch_now(at_feet: Vector2, perch_kind: String) -> void:
 	feet = at_feet
 	state = State.PERCHED
 	facing_left = App.rng.randf() < 0.5
-	stay = App.rng.randf_range(5.0, 12.0)
+	stay = App.rng.randf_range(BirdRules.STAY_MIN, BirdRules.STAY_MAX)
 	idle_left = App.rng.randf_range(1.5, 4.0)
 	_update()
 

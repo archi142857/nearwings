@@ -39,7 +39,7 @@ func test_three_sets_exist_with_right_shapes() -> void:
 				eq(s.x, s.y, "정사각형")
 			"landscape":
 				check(s.x > s.y, "가로형은 가로가 길다 (%s)" % str(s))
-		for palette in ["day", "evening"]:
+		for palette in ["day", "dawn", "evening", "night"]:
 			var baked: Texture2D = load("%s/%s/baked_%s.png" % [HABITAT, set_name, palette])
 			eq(Vector2i(baked.get_size()), s, "%s: 구운 %s 그림 크기 = index 크기" % [set_name, palette])
 
@@ -69,7 +69,11 @@ func test_perches_inside_scene() -> void:
 func test_palettes_cover_every_set() -> void:
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(HABITAT + "/palettes.json"))
 	var day: Array = data["palettes"]["day"]
-	eq(day.size(), (data["palettes"]["evening"] as Array).size(), "낮·저녁 색 수가 같다")
+	for name in ["dawn", "evening", "night"]:
+		check(data["palettes"].has(name), "%s 색표가 있다" % name)
+		eq((data["palettes"][name] as Array).size(), day.size(), "%s 색 수가 낮과 같다" % name)
+	for key in TimeOfDay.KEYS:
+		check((data["order"] as Array).has(key[1]), "시간대 %s 색표가 order에 있다" % key[1])
 	for set_name in Layout.SET_NAMES:
 		var img: Image = (load("%s/%s/index.png" % [HABITAT, set_name]) as Texture2D).get_image()
 		img.convert(Image.FORMAT_R8)

@@ -9,7 +9,6 @@ var fps_label: Label
 var gear: Button
 var panel: PanelContainer
 var info_label: Label
-var count_label: Label
 var frame_ms: Array[float] = []
 var acc := 0.0
 
@@ -53,7 +52,9 @@ func _process(delta: float) -> void:
 		var worst := 0.0
 		for v in frame_ms:
 			worst = maxf(worst, v)
-		fps_label.text = "%d fps · 가장 느린 프레임 %d ms · %s" % [Engine.get_frames_per_second(), int(round(worst)), Layout.SET_LABELS.get(main.scene_set, "")]
+		var hour: float = main.clock_hour
+		fps_label.text = "%d fps · 가장 느린 프레임 %d ms · %s · %s %s" % [Engine.get_frames_per_second(), int(round(worst)),
+			Layout.SET_LABELS.get(main.scene_set, ""), TimeOfDay.format(hour), TimeOfDay.LABELS[TimeOfDay.phase(hour)]]
 		fps_label.size = fps_label.get_combined_minimum_size()
 		if panel.visible:
 			_update_info()
@@ -128,36 +129,24 @@ func _build_panel() -> void:
 	box.add_child(_toggle("칸 경계 섞기", "smooth_edges"))
 	box.add_child(_toggle("칸 단위로 움직이기", "snap_motion"))
 
-	box.add_child(UiStyle.label("낮 ↔ 저녁 (임시 색)"))
-	var slider := HSlider.new()
-	slider.min_value = 0.0
-	slider.max_value = 1.0
-	slider.step = 0.01
-	slider.value = float(App.settings["evening"])
-	slider.custom_minimum_size = Vector2(dp(232), dp(40))
-	slider.value_changed.connect(func(v: float) -> void: App.set_setting("evening", v))
-	box.add_child(slider)
-
-	var count_row := HBoxContainer.new()
-	count_row.add_theme_constant_override("separation", dp(6))
-	var cl := UiStyle.label("새 수")
-	cl.custom_minimum_size.x = dp(64)
-	count_row.add_child(cl)
-	var minus := Button.new()
-	minus.text = "-"
-	minus.custom_minimum_size = Vector2(dp(48), dp(44))
-	minus.pressed.connect(func() -> void: _change_count(-1))
-	count_row.add_child(minus)
-	count_label = UiStyle.label(str(App.settings["bird_count"]))
-	count_label.custom_minimum_size.x = dp(36)
-	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_row.add_child(count_label)
-	var plus := Button.new()
-	plus.text = "+"
-	plus.custom_minimum_size = Vector2(dp(48), dp(44))
-	plus.pressed.connect(func() -> void: _change_count(1))
-	count_row.add_child(plus)
-	box.add_child(count_row)
+	# 시간 흐름: 둘 중 하나로 정할 때까지만 둔다 (5분에 하루 / 기기 시계)
+	var time_row := HBoxContainer.new()
+	time_row.add_theme_constant_override("separation", dp(6))
+	var tl := UiStyle.label("시간")
+	tl.custom_minimum_size.x = dp(64)
+	time_row.add_child(tl)
+	var tgroup := ButtonGroup.new()
+	for pair in [["fast", "5분에 하루"], ["real", "실제 시간"]]:
+		var b := Button.new()
+		b.toggle_mode = true
+		b.button_group = tgroup
+		b.text = pair[1]
+		b.button_pressed = App.settings["time_mode"] == pair[0]
+		b.custom_minimum_size = Vector2(dp(96), dp(44))
+		var mode: String = pair[0]
+		b.pressed.connect(func() -> void: App.set_setting("time_mode", mode))
+		time_row.add_child(b)
+	box.add_child(time_row)
 
 	info_label = UiStyle.label("", dp(11))
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -188,12 +177,7 @@ func _toggle(title: String, key: String) -> Button:
 	return b
 
 
-func _change_count(d: int) -> void:
-	App.set_setting("bird_count", clampi(int(App.settings["bird_count"]) + d, 0, 12))
-
-
 func _on_settings() -> void:
-	count_label.text = str(App.settings["bird_count"])
 	visible = bool(App.settings["show_ui"])
 	_update_info()
 
@@ -206,3 +190,4 @@ func _update_info() -> void:
 		Layout.SET_LABELS.get(main.scene_set, ""), int(scene.x), int(scene.y), int(round(cells.x)), int(round(cells.y)),
 		int(vs.x), int(vs.y), main.bg_px, main.bg_px * main.bird_cell(),
 		dens, "폰 크기(세로 고정)" if App.is_phone_now() else "큰 화면(모든 방향)"]
+	info_label.text += " · 시각 %s (%s)" % [TimeOfDay.format(main.clock_hour), "5분에 하루" if App.settings["time_mode"] == "fast" else "기기 시계"]

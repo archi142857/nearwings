@@ -36,6 +36,11 @@ VARIANTS = [
     ("dex_fold_land", "fold_2400x2160", ["--dex", FOUND, "--save=user://shot_save.json"]),
     ("detail_phone", "phone_1080x2400", ["--dex", "--detail=pica_serica", FOUND, "--save=user://shot_save.json"]),
     ("shoot_phone", "phone_1080x2400", ["--shoot", "--fresh", "--save=user://shot_save.json"]),
+    # 시간대: 기본 캡처는 정오(--hour=12)에 멈춰 찍고, 새벽·해 질 녘·밤은 따로 찍는다
+    ("dawn_phone", "phone_1080x2400", ["--hour=5.75"]),
+    ("dusk_phone", "phone_1080x2400", ["--hour=18.5"]),
+    ("night_phone", "phone_1080x2400", ["--hour=23"]),
+    ("night_tablet_land", "tablet_2560x1600", ["--hour=23"]),
 ]
 
 
@@ -44,7 +49,7 @@ def godot_path():
     return os.environ.get("GODOT") or f"{tools}/godot/Godot_v4.7.2-stable_linux.x86_64"
 
 
-def capture(name, w, h, dens, extra, scene_args=("--prewarm",)):
+def capture(name, w, h, dens, extra, scene_args=("--prewarm", "--hour=12")):
     out = OUT / f"{name}.png"
     if out.exists():
         out.unlink()
@@ -136,7 +141,8 @@ def main():
         size = {d[0]: d[1:] for d in DEVICES}
         for name, dev, vargs in VARIANTS:
             w, h, dens = size[dev]
-            ok, errors = capture(name, w, h, dens, extra, ("--prewarm", *vargs))
+            hour = [] if any(a.startswith("--hour=") for a in vargs) else ["--hour=12"]
+            ok, errors = capture(name, w, h, dens, extra, ("--prewarm", *hour, *vargs))
             print(f"{'ok ' if ok and not errors else '!! '} {name} ({dev})" + (f"  오류 {len(errors)}건: {errors[0]}" if errors else ""))
             failed += (not ok) or bool(errors)
             names.append(name)

@@ -7,7 +7,9 @@ extends Node
 ##   --seed=<n>       새 움직임을 매번 같게
 ##   --prewarm        새를 처음부터 앉혀 둔다
 ##   --set=<portrait|square|landscape>  배경 벌을 정해 쓴다 (기본은 화면 비율에 가장 가까운 벌)
-##   --bg_ratio=<r> --evening=<0~1> --smooth=<0|1> --snap=<0|1> --bird_count=<n> --ui=<0|1>
+##   --hour=<0~24>    그 시각에 멈춘다 (화면 캡처·시험용)
+##   --time=<fast|real>  시간: 5분에 하루(fast, 기본) 또는 기기 시계(real)
+##   --bg_ratio=<r> --smooth=<0|1> --snap=<0|1> --ui=<0|1>
 
 signal settings_changed
 
@@ -17,8 +19,7 @@ var settings := {
 	"bg_ratio": 1.25,       # 배경 칸이 새 칸의 몇 배인지 (결정 기록: 1.25)
 	"smooth_edges": true,   # 정수가 아닌 배율에서 칸 경계만 1화소 안에서 섞기
 	"snap_motion": false,   # 새와 화면을 칸 단위로 끊어 움직이기 (비교용)
-	"evening": 0.0,         # 0 = 낮, 1 = 저녁 (임시 저녁 색표)
-	"bird_count": 5,
+	"time_mode": "fast",    # 시간 흐름: fast = 5분에 하루, real = 기기 시계 (둘 중 하나로 정하기 전 시험용)
 	"show_ui": true,
 }
 
@@ -34,14 +35,12 @@ func _ready() -> void:
 		rng.randomize()
 	if args.has("bg_ratio"):
 		settings["bg_ratio"] = float(args["bg_ratio"])
-	if args.has("evening"):
-		settings["evening"] = float(args["evening"])
+	if args.has("time"):
+		settings["time_mode"] = "real" if args["time"] == "real" else "fast"
 	if args.has("smooth"):
 		settings["smooth_edges"] = args["smooth"] != "0"
 	if args.has("snap"):
 		settings["snap_motion"] = args["snap"] != "0"
-	if args.has("bird_count"):
-		settings["bird_count"] = int(args["bird_count"])
 	if args.has("ui"):
 		settings["show_ui"] = args["ui"] != "0"
 	get_tree().root.size_changed.connect(apply_orientation_policy)

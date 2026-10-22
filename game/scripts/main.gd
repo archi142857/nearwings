@@ -2,6 +2,7 @@ extends Node2D
 ## 0단계 시험판: 배경, 새, 뷰파인더와 셔터, 도감, 시험용 설정.
 ## 배경은 서식지마다 세로형·정사각형·가로형 세 벌이고, 화면 비율에 가장 가까운 벌을 화면에 꽉 차게 그린다
 ## (결정 기록 2026-10-22). 화면은 고정이고 밀어서 둘러보지 않는다. 회전·접기·창 크기가 바뀌면 벌을 다시 고른다.
+## 배경과 새 빛깔은 시간대(새벽·낮·저녁·밤)를 따른다. 시간은 5분에 하루가 지나거나(기본) 기기 시계를 따른다(시험용 설정).
 ## 장면 좌표 단위는 배경 칸이고, 카메라 확대 배율이 곧 '배경 한 칸 = 몇 화소'다.
 
 const HABITAT := "res://assets/habitats/urban_river_park"
@@ -28,6 +29,11 @@ var view_cells := Vector2(216.0, 480.0)
 var bg_px := 5.0                    # 배경 한 칸 = 화면 몇 화소
 var drag := Drag.NONE
 var capture_left := -1
+var clock_hour := 12.0              # 게임 시각 (0~24시)
+var clock_start := 12.0             # 빠른 시간이 시작한 시각
+var clock_elapsed := 0.0            # 빠른 시간이 시작하고 지난 초
+var clock_frozen := false           # --hour: 그 시각에 멈춤 (화면 캡처·시험용)
+var time_mode := ""
 
 
 func _ready() -> void:
@@ -79,6 +85,15 @@ func _ready() -> void:
 	debug_ui = preload("res://scripts/ui/debug_ui.gd").new()
 	add_child(debug_ui)
 	debug_ui.setup(self)
+
+	# 시간: 처음에는 기기 시계의 지금 시각에서 시작한다
+	if App.args.has("hour"):
+		clock_start = float(App.args["hour"])
+		clock_frozen = true
+	else:
+		clock_start = TimeOfDay.real_hour()
+	clock_hour = clock_start
+	time_mode = String(App.settings["time_mode"])
 
 	get_tree().root.size_changed.connect(_on_resized)
 	App.settings_changed.connect(_apply_settings)
@@ -140,6 +155,7 @@ func _on_resized() -> void:
 		background.use_set(chosen)
 		scene_cells = set_sizes[chosen]
 		spawner.use_perches(set_perches[chosen])
+		_apply_time()
 	bg_px = Layout.cover_px(view_px, scene_cells)
 	view_cells = Layout.window_cells(view_px, bg_px)
 	camera.zoom = Vector2(bg_px, bg_px)
@@ -152,13 +168,32 @@ func _on_resized() -> void:
 
 
 func _apply_settings() -> void:
-	background.set_evening(float(App.settings["evening"]))
 	background.set_smooth(bool(App.settings["smooth_edges"]))
 	sharp_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	dex_ui.shadow_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
-	# 임시: 저녁에는 새도 배경처럼 조금 물들인다 (새 색표가 생기면 바꾼다)
-	birds_layer.modulate = Color.WHITE.lerp(Color(0.86, 0.76, 0.70), float(App.settings["evening"]))
+	var mode := String(App.settings["time_mode"])
+	if mode != time_mode:
+		time_mode = mode
+		if mode == "fast":   # 빠른 시간으로 바꾸면 지금 시각에서 이어서 흐른다
+			clock_start = clock_hour
+			clock_elapsed = 0.0
 	_place_camera()
+
+
+## 시각을 흐르게 하고, 배경과 새 빛깔을 그 시각에 맞춘다.
+func _tick_clock(delta: float) -> void:
+	if not clock_frozen:
+		if time_mode == "real":
+			clock_hour = TimeOfDay.real_hour()
+		else:
+			clock_elapsed += delta
+			clock_hour = TimeOfDay.fast_hour(clock_start, clock_elapsed)
+	_apply_time()
+
+
+func _apply_time() -> void:
+	background.set_time(clock_hour)
+	birds_layer.modulate = TimeOfDay.bird_tint(clock_hour)   # 임시: 새도 배경처럼 조금 물들인다
 
 
 ## 카메라는 장면 가운데에 고정한다. 비율이 조금 달라 남는 만큼은 양쪽 가장자리를 똑같이 자른다.
@@ -206,7 +241,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		capture_ui.hide_hint()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_tick_clock(delta)
 	if capture_left > 0:
 		capture_left -= 1
 		if App.args.has("shoot") and capture_left == 25:

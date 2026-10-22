@@ -2,12 +2,14 @@ extends Sprite2D
 ## 서식지 배경 한 벌. 1칸 = 장면 좌표 1.
 ## 서식지마다 세로형·정사각형·가로형 세 벌(portrait, square, landscape 폴더)이 있고 색표(palettes.json)는 하나다.
 ## 원본은 벌마다 index.png(칸마다 색 번호)이고, tools/bake_palettes.py가 색표마다 baked_<이름>.png로 구워 둔다.
-## 화면에는 구운 그림을 그리고 낮·저녁 사이는 두 장을 섞는다.
+## 화면에는 구운 그림을 그리고, 시간대가 바뀌는 사이는 이웃한 두 시간대 그림을 섞는다(TimeOfDay).
 ## (SubViewport로 실행 중에 굽는 방법은 Compatibility 렌더러에서 색이 어두워져 쓰지 않는다.)
 
 var habitat_dir := ""
 var palette_order: Array = []
 var mat: ShaderMaterial
+var textures := {}        # 지금 벌의 색표 이름 → 구운 그림
+var shown := ["", ""]     # 지금 섞고 있는 두 색표
 
 
 func setup(dir: String) -> void:
@@ -33,19 +35,34 @@ func set_sizes() -> Dictionary:
 
 
 func use_set(set_id: String) -> void:
-	var dir := habitat_dir + "/" + set_id
-	texture = load(dir + "/baked_%s.png" % palette_order[0])
-	if palette_order.has("evening"):
-		mat.set_shader_parameter("tex_b", load(dir + "/baked_evening.png"))
+	textures.clear()
+	for p in palette_order:
+		textures[p] = load("%s/%s/baked_%s.png" % [habitat_dir, set_id, p])
+	shown = ["", ""]
+	_show(palette_order[0], palette_order[0], 0.0)
 
 
 func scene_size() -> Vector2:
 	return Vector2(texture.get_size())
 
 
-## 0 = 낮, 1 = 저녁.
-func set_evening(amount: float) -> void:
-	mat.set_shader_parameter("mix_ab", clampf(amount, 0.0, 1.0))
+## 시각(0~24시)에 맞는 색으로 그린다. 없는 색표는 낮 색표로 대신한다.
+func set_time(hour: float) -> void:
+	var b := TimeOfDay.blend(hour)
+	_show(b[0], b[1], b[2])
+
+
+func _show(a: String, b: String, t: float) -> void:
+	if not textures.has(a):
+		a = palette_order[0]
+	if not textures.has(b):
+		b = palette_order[0]
+	if a != shown[0]:
+		texture = textures[a]
+	if b != shown[1]:
+		mat.set_shader_parameter("tex_b", textures[b])
+	shown = [a, b]
+	mat.set_shader_parameter("mix_ab", clampf(t, 0.0, 1.0))
 
 
 func set_smooth(on: bool) -> void:
