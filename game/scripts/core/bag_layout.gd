@@ -20,6 +20,10 @@ const TAG_GAP := 8.0 / DESIGN_PX         # 이름표는 그림 아래 8화소
 const ROW_MARGIN := 14.0                 # 한 줄 배치: 도구 무리 위아래 안감 여백 (가방 칸)
 const FRONT_ROWS := 42                   # 열린 가방에서 보이는 앞면 (라벨까지, 가방 칸)
 const ARROW_GAP := 12.0                  # 닫힌 가방 윗단에서 화살표 윗변까지 (가방 칸, 시안 60화소)
+# 움직임 (디자인 세션 배치값 art/bag/design_layout.json 'motion'). s = 밀기 정도 (0 = 공원, 1 = 가방 속)
+const BAG_LAG := 0.06                    # 가방은 s가 이만큼 지나서야 따라오기 시작한다
+const FOCUS_FROM := 0.25                 # 바닥이 흐려지기 시작하는 s
+const FOCUS_TO := 0.85                   # 다 흐려지는 s
 
 
 ## 화면(배경 칸)에 맞춘 배치. 결과:
@@ -134,6 +138,21 @@ static func _row_items(d: Dictionary, size: Vector2, rows_add: Array) -> Array:
 		out.append({"id": t["id"], "art": art, "tag": tag})
 		x += asz.x + gap
 	return out
+
+
+## s에 따른 가방 자리 (0 = 닫힘, 1 = 열림, 배치값 bag_progress): 늦게 출발해 빨라졌다가 끝에서 살짝 더 밀려 자리 잡는다.
+static func bag_progress(s: float) -> float:
+	var x := clampf((s - BAG_LAG) / (1.0 - BAG_LAG), 0.0, 1.0)
+	return 0.45 * x + 0.55 * ease_in_out_cubic(x) + 0.03 * sin(PI * clampf((x - 0.7) / 0.3, 0.0, 1.0))
+
+
+## s에 따른 흐림 정도 a (배치값 focus_pull): 바닥 흐림, 채도 빼기, 어둡게 하기, 가방 그림자 세기에 쓴다.
+static func focus(s: float) -> float:
+	return smoothstep(FOCUS_FROM, FOCUS_TO, s)
+
+
+static func ease_in_out_cubic(u: float) -> float:
+	return 4.0 * u * u * u if u < 0.5 else 1.0 - pow(-2.0 * u + 2.0, 3.0) * 0.5
 
 
 ## n개 묶음을 늘임 구간들에 고루 나눈다. 빼는 묶음(음수)은 구간마다 뺄 수 있는 만큼까지만.

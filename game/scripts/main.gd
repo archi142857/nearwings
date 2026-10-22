@@ -8,7 +8,9 @@ extends Node2D
 
 const HABITAT := "res://assets/habitats/urban_river_park"
 const CAPTURE_SHARE := 0.7                       # 새 그림의 70% 이상이 뷰파인더 안이면 찍힌 것
-const LOOK_DARKEN := 0.16                        # 가방을 들여다볼 때 바닥이 어두워지는 정도
+const LOOK_DARKEN := 0.16                        # 가방을 다 열었을 때 공원·바닥·새가 어두워지는 정도 (배치값 focus_pull)
+const LOOK_DESAT := 0.18                         # 그때 채도를 빼는 정도
+const BIRD_BLUR := 0.9                           # 그때 새를 흐리는 정도 (새 칸: 폰 3.6화소 ÷ 4화소)
 const DRAG_DP := 10.0                            # 이만큼 움직여야 '밀기'로 본다
 const EDGE_DP := 24.0                            # 맨 아래 가장자리: 안드로이드·iOS 홈 제스처 자리라 위로 밀기를 받지 않는다
 const CAPTURE_TOOLS := ["camera", "binoculars"]  # 뷰파인더와 셔터를 쓰는 도구 (0단계는 둘이 같다)
@@ -18,7 +20,8 @@ enum Touch { NONE, PENDING, FINDER, OPEN_DRAG, CLOSE_DRAG, TOOL }
 var background: Sprite2D
 var birds_layer: Node2D
 var camera: Camera2D
-var sharp_mat: ShaderMaterial        # 새와 화면 그림이 함께 쓰는 '칸 경계 섞기' 재질
+var sharp_mat: ShaderMaterial        # 화면 그림(가방·도감 등)이 함께 쓰는 '칸 경계 섞기' 재질
+var bird_mat: ShaderMaterial         # 공원의 새: 같은 셰이더에 가방을 열 때 흐림·채도 빼기를 더한다
 var db: SpeciesDB
 var collection: Collection
 var spawner: BirdSpawner
@@ -49,6 +52,7 @@ var time_mode := ""
 func _ready() -> void:
 	sharp_mat = ShaderMaterial.new()
 	sharp_mat.shader = preload("res://shaders/sharp_sprite.gdshader")
+	bird_mat = sharp_mat.duplicate()
 	background = preload("res://scripts/background.gd").new()
 	add_child(background)
 	background.setup(HABITAT)
@@ -69,7 +73,7 @@ func _ready() -> void:
 	db = SpeciesDB.new()
 	db.load_file("res://data/species.json")
 	spawner = BirdSpawner.new()
-	spawner.setup(self, birds_layer, db, sharp_mat)
+	spawner.setup(self, birds_layer, db, bird_mat)
 	add_child(spawner)
 
 	collection = Collection.new()
@@ -187,6 +191,7 @@ func _on_resized() -> void:
 func _apply_settings() -> void:
 	background.set_smooth(bool(App.settings["smooth_edges"]))
 	sharp_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
+	bird_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	dex_ui.shadow_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	bag.shadow_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	var mode := String(App.settings["time_mode"])
@@ -209,11 +214,17 @@ func _tick_clock(delta: float) -> void:
 	_apply_time()
 
 
+## 가방 메뉴를 여는 만큼(흐림 정도 a) 공원·바닥·새를 흐리고 채도를 빼고 어둡게 한다(배치값 focus_pull).
+## 가방·도구·이름표는 밤에도 낮 색 그대로 둔다(결정 기록 2026-10-22).
 func _apply_time() -> void:
 	background.set_time(clock_hour)
-	var dark := 1.0 - LOOK_DARKEN * float(bag.look) if bag else 1.0
+	var a: float = bag.focus() if bag else 0.0
+	var dark := 1.0 - LOOK_DARKEN * a
 	background.modulate = Color(dark, dark, dark)
+	background.set_focus(a, LOOK_DESAT * a)
 	birds_layer.modulate = TimeOfDay.bird_tint(clock_hour) * Color(dark, dark, dark)   # 임시: 새도 배경처럼 조금 물들인다
+	bird_mat.set_shader_parameter("desat", LOOK_DESAT * a)
+	bird_mat.set_shader_parameter("blur", BIRD_BLUR * a)
 
 
 ## 카메라는 장면 가운데에 고정한다. 비율이 조금 달라 남는 만큼은 양쪽 가장자리를 똑같이 자른다.
@@ -227,7 +238,6 @@ func _place_camera() -> void:
 	var drop := ground_top - (cam_base.y - view_cells.y * 0.5)   # 화면 높이 (+1칸 미만)
 	var look: float = bag.look if bag else 0.0
 	camera.position = cam_base + Vector2(0.0, snappedf(look * drop, step))
-	background.set_look(look)
 
 
 func _on_shutter() -> void:
@@ -334,7 +344,7 @@ func _touch_move(p: Vector2, rel: Vector2) -> void:
 				var from_edge := touch_start.y > view_px.y - UiStyle.insets().w - UiStyle.dp(EDGE_DP, App.density())
 				if vertical and d.y < 0.0 and not from_edge:
 					touch = Touch.OPEN_DRAG
-					capture_ui.set_hidden(true)   # 뷰파인더와 셔터는 밀기 시작하자마자 사라진다
+					capture_ui.set_hidden(true)   # 뷰파인더와 셔터는 누를 수 없고, 밀기 첫 15% 동안 사라진다
 					bag.begin_drag()
 					bag.drag_to(-d.y / view_px.y)
 				elif tool in CAPTURE_TOOLS:
@@ -375,6 +385,7 @@ func _process(delta: float) -> void:
 	_place_camera()
 	if bag.is_busy() and not capture_ui.hidden:
 		capture_ui.set_hidden(true)
+	capture_ui.set_fade(bag.ui_alpha())
 	if capture_left > 0:
 		capture_left -= 1
 		if App.args.has("shoot") and capture_left == 8:   # 찍고 나서 알림이 떠 있는 동안 화면을 찍는다

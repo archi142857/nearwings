@@ -1,5 +1,5 @@
 {
- "note": "임시: 디자인 캔버스 '가방 메뉴'의 가방 속 화면(10-22 쌍안경·카메라)과 도감 그림 키트에서 tools/bag_import.py가 뽑았다. 좌표는 1080×2400 시안 화소.",
+ "note": "디자인 세션 원본(1칸 = 1화소, 2026-10-22)과 배치값(art/bag/design_layout.json)에서 tools/bag_import.py가 만들었다. 도감 그림은 키트로 만든 그림(art/bag/kit_dogam.png). 좌표는 1080×2400 폰 화소.",
  "design_px": [
   1080,
   2400
@@ -459,26 +459,26 @@
   "tag_binoculars": {
    "file": "tag_binoculars.png",
    "size": [
-    184,
-    76
+    46,
+    19
    ],
    "tl_px": [
     660,
     1652
    ],
-   "px_per_cell": 1
+   "px_per_cell": 4
   },
   "tag_camera": {
    "file": "tag_camera.png",
    "size": [
-    188,
-    76
+    47,
+    19
    ],
    "tl_px": [
     640,
     2100
    ],
-   "px_per_cell": 1
+   "px_per_cell": 4
   },
   "dogam": {
    "file": "dogam.png",
@@ -495,23 +495,23 @@
   "tag_dogam": {
    "file": "tag_dogam.png",
    "size": [
-    140,
-    76
+    35,
+    19
    ],
    "tl_px": [
     220,
     1868
    ],
-   "px_per_cell": 1
+   "px_per_cell": 4
   },
   "arrows": {
    "file": "arrows.png",
    "size": [
-    11,
+    13,
     9
    ],
    "tl_px": [
-    518,
+    514,
     2260
    ],
    "px_per_cell": 4
@@ -525,7 +525,9 @@
   ]
  },
  "bag_shadow": {
-  "cells": 6,
-  "strength": 0.11
+  "max_filter_px": 9,
+  "blur_px": 16.0,
+  "strength": 0.28,
+  "min_focus": 0.25
  }
 }

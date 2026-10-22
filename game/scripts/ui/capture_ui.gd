@@ -23,7 +23,8 @@ var toast_tween: Tween
 var flash_tween: Tween
 var hint: Label
 var active := false     # 카메라나 쌍안경을 들고 있다
-var hidden := false     # 가방을 여는 동안 잠깐 숨긴다
+var hidden := false     # 가방이 움직이거나 열려 있다: 누를 수 없다
+var fade := 1.0         # 가방을 미는 만큼 사라진다 (밀기 첫 15%, BagMenu.ui_alpha)
 var hint_done := false   # 첫 안내를 보고 뷰파인더를 만졌다
 
 
@@ -88,17 +89,27 @@ func set_active(on: bool) -> void:
 	_refresh()
 
 
-## 가방을 여는 동안(시선이 내려가는 동안) 숨긴다.
+## 가방이 움직이거나 열려 있는 동안 누를 수 없게 한다. 보이는 정도는 set_fade.
 func set_hidden(h: bool) -> void:
 	hidden = h
 	_refresh()
 
 
+## 가방을 미는 만큼 뷰파인더·셔터·안내가 사라진다 (1 = 다 보임).
+func set_fade(a: float) -> void:
+	if is_equal_approx(a, fade):
+		return
+	fade = a
+	_refresh()
+
+
 func _refresh() -> void:
-	var show := active and not hidden
+	var show := active and fade > 0.0
+	for n in [finder, shutter, hint]:
+		n.modulate.a = fade
 	finder.visible = show
 	shutter.visible = show
-	shutter.disabled = not show
+	shutter.disabled = not (active and not hidden)
 	hint.visible = show and not hint_done
 
 

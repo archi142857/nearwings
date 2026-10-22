@@ -31,7 +31,7 @@ func test_design_phone_matches_mockup() -> void:
 	eq(lay["size"], Vector2(206, 248), "가방 크기")
 	check(lay["open_pos"].is_equal_approx(Vector2(5, 232)), "열린 가방 자리 = 시안 (25, 1160)화소: %s" % str(lay["open_pos"]))
 	near(lay["closed_pos"].y, 464.0, 1e-6, "닫힌 가방은 윗단 16칸(80화소)만 보인다")
-	check(lay["arrows_pos"].is_equal_approx(Vector2(103.6, 452)), "화살표 = 시안 (518, 2260)화소: %s" % str(lay["arrows_pos"]))
+	check(lay["arrows_pos"].is_equal_approx(Vector2(102.8, 452)), "화살표 = 디자인 원본 (514, 2260)화소: %s" % str(lay["arrows_pos"]))
 	var dogam: Rect2 = lay["items"][0]["art"]
 	check(dogam.position.is_equal_approx(Vector2((156.0 - 25.0) / 5.0, (1504.0 - 1160.0) / 5.0)), "도감 자리 = 키트: %s" % str(dogam))
 
@@ -120,3 +120,19 @@ func test_spread_respects_limits() -> void:
 	eq(BagLayout.spread(4, runs, 12), [1, 2, 1], "더하기는 가운데부터 고루")
 	var minus := BagLayout.spread(-20, runs, 12)
 	eq(minus, [-3, -3, -3], "빼기는 구간마다 뺄 수 있는 만큼까지")
+
+
+## 움직임 곡선이 디자인 배치값(art/bag/design_layout.json 'motion')대로인지.
+func test_motion_curves_follow_design_values() -> void:
+	near(BagLayout.bag_progress(0.0), 0.0, 1e-6, "가방은 처음에 그대로")
+	near(BagLayout.bag_progress(0.06), 0.0, 1e-6, "밀기 6%까지는 따라오지 않는다")
+	near(BagLayout.bag_progress(1.0), 1.0, 1e-6, "끝에서 열린 자리")
+	near(BagLayout.bag_progress(0.5), 0.45 * (0.44 / 0.94) + 0.55 * BagLayout.ease_in_out_cubic(0.44 / 0.94), 1e-6, "가운데는 배치값 공식")
+	var prev := 0.0
+	for i in 101:
+		var v := BagLayout.bag_progress(i / 100.0)
+		check(v >= prev - 1e-6 and v <= 1.0 + 1e-6, "가방 자리는 줄지 않고 넘치지 않는다 (s=%.2f, %.4f)" % [i / 100.0, v])
+		prev = v
+	near(BagLayout.focus(0.25), 0.0, 1e-6, "흐림은 밀기 25%에서 시작")
+	near(BagLayout.focus(0.55), 0.5, 1e-6, "55%에서 절반")
+	near(BagLayout.focus(0.85), 1.0, 1e-6, "85%에서 다 흐리다")

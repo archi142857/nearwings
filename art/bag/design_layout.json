@@ -1,0 +1,195 @@
+{
+ "what": "가방 메뉴 원본의 배치값 (디자인 세션, 2026-10-22). 화면 좌표는 1080x2400 폰 기준 px.",
+ "screen_px": [
+  1080,
+  2400
+ ],
+ "cell_px": {
+  "tools_and_tags": 4,
+  "bag_and_ground": 5
+ },
+ "bag": {
+  "file": "가방/bag_1x.png",
+  "size_cells": [
+   216,
+   248
+  ],
+  "top_when_open_px": 1160,
+  "peek_on_main_screen_px": 80,
+  "note": "가방 바탕은 배경 규칙(5px 칸, 테두리 없음). 화면 양옆 5칸(25px)에는 바닥이 보인다."
+ },
+ "ground": {
+  "files": {
+   "portrait": "바닥/urban_river_park_portrait_ground.png",
+   "square": "바닥/urban_river_park_square_ground.png",
+   "landscape": "바닥/urban_river_park_landscape_ground.png"
+  },
+  "size_cells": {
+   "portrait": [
+    240,
+    480
+   ],
+   "square": [
+    480,
+    480
+   ],
+   "landscape": [
+    480,
+    300
+   ]
+  },
+  "note": "도시 하천 공원 발밑 바닥, 벌마다 따로(1칸 = 1화소, 배경 칸). 월드 색표 색만 써서 (밝기 단계, 재질)로 되돌릴 수 있다: grass L2·L3, tree L2·L3(토끼풀), rock L2·L3(조약돌), stubble L3·soil L4(낙엽)."
+ },
+ "tools": {
+  "dogam": {
+   "label": "도감",
+   "file": "도구/dogam_1x.png",
+   "file_upright": "도구/dogam_1x_upright.png",
+   "rotation_deg_baked_in": -6.0,
+   "size_cells": [
+    77,
+    99
+   ],
+   "center_in_bag_px": [
+    290,
+    520
+   ],
+   "topleft_screen_px": [
+    144,
+    1504
+   ],
+   "tag": {
+    "file": "이름표/tag_dogam_1x.png",
+    "size_cells": [
+     35,
+     19
+    ],
+    "topleft_screen_px": [
+     220,
+     1908
+    ]
+   }
+  },
+  "bino": {
+   "label": "쌍안경",
+   "file": "도구/bino_1x.png",
+   "file_upright": "도구/bino_1x_upright.png",
+   "rotation_deg_baked_in": 5.0,
+   "size_cells": [
+    77,
+    87
+   ],
+   "center_in_bag_px": [
+    752,
+    292
+   ],
+   "topleft_screen_px": [
+    600,
+    1296
+   ],
+   "tag": {
+    "file": "이름표/tag_bino_1x.png",
+    "size_cells": [
+     46,
+     19
+    ],
+    "topleft_screen_px": [
+     660,
+     1652
+    ]
+   }
+  },
+  "camera": {
+   "label": "카메라",
+   "file": "도구/camera_1x.png",
+   "file_upright": "도구/camera_1x_upright.png",
+   "rotation_deg_baked_in": -4.0,
+   "size_cells": [
+    96,
+    84
+   ],
+   "center_in_bag_px": [
+    732,
+    760
+   ],
+   "topleft_screen_px": [
+    544,
+    1756
+   ],
+   "tag": {
+    "file": "이름표/tag_camera_1x.png",
+    "size_cells": [
+     47,
+     19
+    ],
+    "topleft_screen_px": [
+     640,
+     2100
+    ]
+   }
+  }
+ },
+ "tool_shadow": {
+  "color": "#D3C9AE",
+  "offset_px": [
+   8,
+   12
+  ],
+  "note": "도구 모양 그대로 가방 안감 위에 평평하게. 누르면 도구만 한 칸 떠오르고 그림자는 남는다."
+ },
+ "motion": {
+  "open": {
+   "gesture": "화면 어디서든 위로 밀기(맨 아래 가장자리 제외)",
+   "release_threshold": 0.25,
+   "after_release_s": 0.45,
+   "after_release_easing": "ease-out cubic",
+   "scroll_px": 2400,
+   "scroll_note": "공원과 발밑 바닥이 한 장으로 이어져 화면 높이만큼 올라간다",
+   "bag_progress": "x = clamp((s-0.06)/0.94); p = 0.45x + 0.55*easeInOutCubic(x) + 0.03*sin(pi*clamp((x-0.7)/0.3)); bag_top = 2320 + (1160-2320)*p"
+  },
+  "focus_pull": {
+   "a": "smoothstep((s-0.25)/0.6)",
+   "gaussian_blur_px": "3.6*a, 흐린 뒤 5px 칸으로 다시 평균",
+   "desaturate": "0.18*a",
+   "darken": "0.16*a"
+  },
+  "bag_shadow_on_ground": {
+   "max_filter_px": 9,
+   "gaussian_blur_px": 16,
+   "strength": "0.28*max(a, 0.25)"
+  },
+  "ui_fade": "뷰파인더·셔터·화살표 알파 = 1 - s/0.15",
+  "tools_settle": {
+   "order": [
+    "dogam",
+    "bino",
+    "camera"
+   ],
+   "delays_s": [
+    0,
+    0.06,
+    0.12
+   ],
+   "duration_s": 0.26,
+   "lift_cells": 3,
+   "curve": "lift = 3*sin(pi*u)^1.2 (반 칸 단위로 맞춤)",
+   "tags_fade_in_s": 0.32
+  },
+  "close": {
+   "gesture": "아래로 밀기, 뒤로 가기, 위쪽 흐린 바닥 누르기",
+   "tags_fade_out_first_s": 0.12,
+   "duration_s": 0.45,
+   "easing": "ease-in-out cubic"
+  }
+ },
+ "dogam_slot": "도감 그림은 파일 한 장으로 바꿔 끼운다(결정 기록 '도감 그림 칸'). 바꿔 낀 그림은 기울이지 않고 가운데를 화면 (290, 1680)px에 둔다.",
+ "chevron": {
+  "file": "이름표/chevron_1x.png",
+  "size_cells": [
+   13,
+   9
+  ],
+  "note": "기본 화면 가방 윗단 위 화살표 둘, 아래 줄은 알파 150. 가방 윗단에서 6칸 위."
+ },
+ "night_proposal": "밤에는 가방·도구·이름표에 배경 밤 변환의 45%만 입힌다(권장, 사용자 확인 전). 밤/night_bag_proposal.png"
+}

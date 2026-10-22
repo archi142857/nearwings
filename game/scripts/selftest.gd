@@ -156,7 +156,7 @@ func run(main_node: Node) -> void:
 
 func _open_bag(vs: Vector2) -> void:
 	await _drag(Vector2(vs.x * 0.5, vs.y * 0.62), Vector2(0.0, -vs.y * 0.36))
-	await _until(func() -> bool: return main.bag.is_open() and main.bag.hop_t < 0.0, 4.0)
+	await _until(func() -> bool: return main.bag.is_open() and not main.bag.is_settling(), 4.0)
 
 
 func _check(cond: bool, what: String) -> void:

@@ -4,12 +4,14 @@ extends Sprite2D
 ## 원본은 벌마다 index.png(칸마다 색 번호)이고, tools/bake_palettes.py가 색표마다 baked_<이름>.png로 구워 둔다.
 ## 화면에는 구운 그림을 그리고, 시간대가 바뀌는 사이는 이웃한 두 시간대 그림을 섞는다(TimeOfDay).
 ## 장면 바로 아래에는 발밑 바닥(ground_<색표>.png)이 이어진다. 가방 메뉴를 열면 시선이 내려가 이 바닥이 보이고,
-## 흐린 바닥(ground_blur_<색표>.png)이 점점 겹쳐진다(set_look).
+## 장면과 바닥 위에 흐린 그림(baked_blur_·ground_blur_<색표>.png)이 흐림 정도만큼 겹치고 채도가 빠진다(set_focus).
 ## (SubViewport로 실행 중에 굽는 방법은 Compatibility 렌더러에서 색이 어두워져 쓰지 않는다.)
+
+const BLURRED := ["scene_blur", "ground_blur"]
 
 var habitat_dir := ""
 var palette_order: Array = []
-var layers := {}          # 이름 → {sprite, mat, textures: {색표: 그림}, shown: [a, b]}  (scene, ground, ground_blur)
+var layers := {}          # 이름 → {sprite, mat, textures: {색표: 그림}, shown: [a, b]}  (scene, scene_blur, ground, ground_blur)
 var set_id := ""
 
 
@@ -20,12 +22,13 @@ func setup(dir: String) -> void:
 	centered = false
 	z_index = -10
 	_add_layer("scene", self)
-	for name in ["ground", "ground_blur"]:
+	for name in ["scene_blur", "ground", "ground_blur"]:   # 그리는 차례: 장면 → 흐린 장면 → 바닥 → 흐린 바닥
 		var s := Sprite2D.new()
 		s.centered = false
 		add_child(s)
 		_add_layer(name, s)
-	layers["ground_blur"]["sprite"].modulate.a = 0.0
+	for name in BLURRED:
+		layers[name]["sprite"].modulate.a = 0.0
 
 
 func _add_layer(name: String, s: Sprite2D) -> void:
@@ -48,7 +51,7 @@ func set_sizes() -> Dictionary:
 
 func use_set(id: String) -> void:
 	set_id = id
-	var files := {"scene": "baked_%s.png", "ground": "ground_%s.png", "ground_blur": "ground_blur_%s.png"}
+	var files := {"scene": "baked_%s.png", "scene_blur": "baked_blur_%s.png", "ground": "ground_%s.png", "ground_blur": "ground_blur_%s.png"}
 	for name in layers:
 		var L: Dictionary = layers[name]
 		L["textures"] = {}
@@ -79,9 +82,12 @@ func set_time(hour: float) -> void:
 	_show(b[0], b[1], b[2])
 
 
-## 가방 메뉴로 시선이 내려간 정도(0~1): 발밑 바닥이 그만큼 흐려진다. 어두워지는 것은 main이 modulate로 한다.
-func set_look(p: float) -> void:
-	layers["ground_blur"]["sprite"].modulate.a = clampf(p, 0.0, 1.0)
+## 가방 메뉴의 흐림 정도(0~1, BagMenu.focus): 흐린 그림을 그만큼 겹치고 채도를 뺀다. 어두워지는 것은 main이 modulate로 한다.
+func set_focus(a: float, desat: float) -> void:
+	for name in BLURRED:
+		layers[name]["sprite"].modulate.a = clampf(a, 0.0, 1.0)
+	for name in layers:
+		layers[name]["mat"].set_shader_parameter("desat", desat)
 
 
 func _show(a: String, b: String, t: float) -> void:

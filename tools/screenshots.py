@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,6 +27,7 @@ DEVICES = [
     ("tablet_1600x2560", 1600, 2560, 2.0),    # 태블릿 세로
     ("tablet_2560x1600", 2560, 1600, 2.0),    # 태블릿 가로
     ("split_1080x1150", 1080, 1150, 2.625),   # 창 나누기 (화면 절반)
+    ("cover_904x2316", 904, 2316, 2.625),     # 폴더블 바깥 화면 (좁은 화면: 가방을 줄인다)
 ]
 
 
@@ -38,9 +40,13 @@ VARIANTS = [
     # 카메라를 든 화면 (뷰파인더·셔터), 찍은 뒤 알림
     ("camera_phone", "phone_1080x2400", ["--tool=camera"]),
     ("shoot_phone", "phone_1080x2400", ["--tool=camera", "--shoot", "--fresh", "--save=user://shot_save.json"]),
-    # 가방 메뉴: 반쯤 연 것, 다 연 것 (폰은 시안과 화소까지 같아야 한다), 넓은 화면은 도구가 한 줄
+    # 가방 메뉴: 미는 중(25·50·75%), 다 연 것 (폰은 디자인 화면과 화소까지 같아야 한다), 넓은 화면은 도구가 한 줄,
+    # 좁은 화면(폴더블 바깥 화면)은 가방을 줄인다
+    ("bag_s25_phone", "phone_1080x2400", ["--bag=0.25"]),
     ("bag_half_phone", "phone_1080x2400", ["--bag=0.5"]),
+    ("bag_s75_phone", "phone_1080x2400", ["--bag=0.75"]),
     ("bag_phone", "phone_1080x2400", ["--bag=1"]),
+    ("bag_cover", "cover_904x2316", ["--bag=1"]),
     ("bag_fold", "fold_2160x2400", ["--bag=1"]),
     ("bag_fold_land", "fold_2400x2160", ["--bag=1"]),
     ("bag_tablet", "tablet_1600x2560", ["--bag=1"]),
@@ -105,20 +111,48 @@ def color_check():
 
 
 def bag_check():
-    """폰에서 다 연 가방이 디자인 시안(캔버스 '도감 그림 칸'의 가방 속 화면, art/bag/canvas_bag_screen.png)과
-    화소까지 같은지 본다. 바닥은 시안과 다르게 그렸고 도감 그림은 키트 예시 대신 다른 그림을 넣었으니,
-    가방 자리(위에서 1160화소부터)에서 도감 자리만 빼고 견준다."""
-    shot = Image.open(OUT / "bag_phone.png").convert("RGB")
-    ref = Image.open(ROOT / "art/bag/canvas_bag_screen.png").convert("RGB")
-    bad = 0
-    for y in range(1160, 2400):
-        for x in range(25, 1055):
-            if 150 <= x < 440 and 1495 <= y < 1955:   # 도감 그림·그림자·이름표
-                continue
-            p, q = shot.getpixel((x, y)), ref.getpixel((x, y))
-            bad += max(abs(p[i] - q[i]) for i in range(3)) > 2
+    """폰에서 다 연 가방이 디자인 세션 화면(art/bag/bag_f4.png: 디자인 원본과 배치값으로 그린 가방 속 화면)과
+    화소까지 같은지 본다. 도감은 디자인 화면의 초록 야장 대신 키트 그림을 넣었으니 가방 자리(위에서 1160화소부터)에서
+    도감 자리만 빼고 견준다. 바닥은 디자인 화면을 만든 뒤 벌마다 새로 그려서 ground_check가 따로 본다."""
+    shot = np.array(Image.open(OUT / "bag_phone.png").convert("RGB")).astype(int)
+    ref = np.array(Image.open(ROOT / "art/bag/bag_f4.png").convert("RGB")).astype(int)
+    diff = np.abs(shot - ref).max(-1) > 2
+    mask = np.zeros_like(diff)
+    mask[1160:2400, 25:1055] = True
+    mask[1495:1990, 140:460] = False   # 도감 그림·그림자·이름표 (디자인 화면의 야장과 키트 그림 둘 다)
+    bad = int((diff & mask).sum())
     ok = bad == 0
-    print(f"{'ok ' if ok else '!! '} 가방 확인: 폰에서 연 가방이 시안과 {'같다' if ok else f'{bad}화소 다르다'} (도감 자리 빼고)")
+    print(f"{'ok ' if ok else '!! '} 가방 확인: 폰에서 연 가방이 디자인 화면과 {'같다' if ok else f'{bad}화소 다르다'} (도감 자리 빼고)")
+    return ok
+
+
+def ground_check():
+    """폰에서 다 연 가방 위 바닥이 배치값(art/bag/design_layout.json 'focus_pull', 'bag_shadow_on_ground')대로인지 본다.
+    디자인 바닥(art/ground)을 5화소 칸으로 키워 가우스 3.6화소로 흐리고 칸마다 평균 → 세 채널 평균 쪽으로 채도 18% 빼기 →
+    16% 어둡게 → 가방 모양을 9화소 최댓값 거르기로 넓혀 16화소로 흐린 그림자(세기 0.28)를 곱한 것과 견준다.
+    위 화면 요소(FPS·설정)를 피해 위에서 200화소부터. 반올림과 오차 함수 근사 차이로 3까지는 같다고 본다."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    from bake_palettes import blur_cells
+    from scipy import ndimage as ndi
+    shot = np.array(Image.open(OUT / "bag_phone.png").convert("RGB")).astype(float)
+    g = np.array(Image.open(ROOT / "art/ground/urban_river_park_portrait_ground.png").convert("RGB"))
+    name, scene = scene_for(1080, 2400)
+    x0 = (scene[0] - 216) // 2
+    cells = blur_cells(g)[:480, x0:x0 + 216].astype(float)
+    cells = cells + (cells.mean(-1, keepdims=True) - cells) * 0.18
+    want = np.repeat(np.repeat(cells * 0.84, 5, 0), 5, 1)              # 2400 × 1080
+    mask = np.zeros((2400 + 200, 1080 + 200))
+    mask[100 + 1160:100 + 2400, 100 + 25:100 + 1055] = 1.0             # 가방 (화면 아래 끝까지)
+    shadow = ndi.gaussian_filter(ndi.maximum_filter(mask, size=9), 16.0, mode="constant")[100:100 + 2400, 100:100 + 1080]
+    want = want * (1.0 - 0.28 * shadow[..., None])
+    look = np.zeros((2400, 1080), bool)                                # 가방 위 바닥과 가방 양옆 바닥
+    look[200:1160] = True
+    look[1160:, :25] = True
+    look[1160:, 1055:] = True
+    d = np.where(look, np.abs(shot - want).max(-1), 0.0)
+    bad = int((d > 3).sum())
+    ok = bad == 0
+    print(f"{'ok ' if ok else '!! '} 바닥 확인: 다 연 가방 위 바닥이 배치값대로 흐리고 어둡다" + ("" if ok else f" ({bad}화소 다름, 가장 큰 차이 {d.max():.0f})"))
     return ok
 
 
@@ -179,6 +213,7 @@ def main():
     if not args and not extra:
         failed += not sprite_color_check()
         failed += not bag_check()
+        failed += not ground_check()
     size = {d[0]: d[1:3] for d in DEVICES}
     dev_of = {v[0]: v[1] for v in VARIANTS}
     labels = {}

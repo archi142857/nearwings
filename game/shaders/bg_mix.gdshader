@@ -2,10 +2,12 @@ shader_type canvas_item;
 // 월드 배경: 구운 그림 두 장(TEXTURE = 색표 A, tex_b = 색표 B)을 mix_ab만큼 섞는다.
 // 칸마다 색만 다르므로 두 그림을 섞는 것은 색표를 섞는 것과 같다.
 // 칸 경계 처리는 sharp_sprite와 같다 (이 노드는 선형 필터로 둔다).
+// desat: 가방 메뉴를 열 때 세 채널 평균 쪽으로 채도를 뺀다(디자인 배치값 'focus_pull'). 어둡게 하는 것은 modulate로 한다.
 
 uniform sampler2D tex_b : filter_linear, repeat_disable;
 uniform float mix_ab : hint_range(0.0, 1.0) = 0.0;
 uniform bool smooth_edges = true;
+uniform float desat : hint_range(0.0, 1.0) = 0.0;
 
 // fragment()의 COLOR에는 이미 기본 UV로 읽은 그림 색이 곱해져 있어서, 정점 색(modulate)만 따로 넘긴다.
 varying vec4 tint;
@@ -30,6 +32,9 @@ void fragment() {
 	vec4 c = texture(TEXTURE, uv);
 	if (mix_ab > 0.0) {
 		c = mix(c, texture(tex_b, uv), mix_ab);
+	}
+	if (desat > 0.0) {
+		c.rgb = mix(c.rgb, vec3((c.r + c.g + c.b) / 3.0), desat);
 	}
 	COLOR = c * tint;
 }
