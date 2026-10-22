@@ -1,10 +1,11 @@
 extends CanvasLayer
-## 포착 화면: 뷰파인더, 셔터, 도감 버튼, 찍을 때 번쩍임, 결과 알림, 첫 안내.
-## 뷰파인더는 화면에 붙어 있어 배경을 밀어도 그대로다. 끌어서 옮기거나, 빈 곳을 짧게 누르면 그 자리로 온다.
+## 포착 화면: 뷰파인더, 셔터, 찍을 때 번쩍임, 결과 알림, 첫 안내.
+## 기본 화면에는 뷰파인더와 셔터가 없다(결정 기록 2026-10-22). 가방에서 카메라나 쌍안경을 꺼내면 나온다(set_active).
+## 뷰파인더는 화면에 붙어 있다. 끌어서 옮기거나, 빈 곳을 짧게 누르면 그 자리로 온다.
 ## 뷰파인더 크기는 배경 칸 기준(64×64칸)이라 기기가 달라도 새와의 크기 비가 같다.
+## 셔터는 화면 아래 가방 윗단·화살표 위에 둔다. 도감은 가방 속에 있다.
 
 signal shutter_pressed
-signal dex_pressed
 
 const VF_CELLS := 64.0
 const SHUTTER_CELLS := 22.0
@@ -15,13 +16,15 @@ var root: Control
 var finder: Control
 var finder_frac := Vector2(0.5, 0.45)   # 뷰파인더 가운데 (화면 비율)
 var shutter: TextureButton
-var dex_btn: Button
 var flash: ColorRect
 var toast: PanelContainer
 var toast_box: VBoxContainer
 var toast_tween: Tween
 var flash_tween: Tween
 var hint: Label
+var active := false     # 카메라나 쌍안경을 들고 있다
+var hidden := false     # 가방을 여는 동안 잠깐 숨긴다
+var hint_done := false   # 첫 안내를 보고 뷰파인더를 만졌다
 
 
 func dp(v: float) -> int:
@@ -55,11 +58,6 @@ func setup(main_node: Node) -> void:
 	shutter.pressed.connect(func() -> void: shutter_pressed.emit())
 	root.add_child(shutter)
 
-	dex_btn = Button.new()
-	dex_btn.custom_minimum_size = Vector2(dp(88), dp(48))
-	dex_btn.pressed.connect(func() -> void: dex_pressed.emit())
-	root.add_child(dex_btn)
-
 	hint = UiStyle.label("괄호를 끌어 새를 넣고 셔터로 찍기")
 	hint.add_theme_stylebox_override("normal", UiStyle.box(Color(UiStyle.PAPER, 0.9), dp(16), dp(10)))
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -80,6 +78,28 @@ func setup(main_node: Node) -> void:
 	if App.args.has("vf"):
 		var p: PackedStringArray = String(App.args["vf"]).split(",")
 		finder_frac = Vector2(float(p[0]), float(p[1]))
+	hint.visible = false
+	_refresh()
+
+
+## 카메라나 쌍안경을 들었다(on) / 넣었다. 뷰파인더를 처음 만질 때까지 안내를 띄운다.
+func set_active(on: bool) -> void:
+	active = on
+	_refresh()
+
+
+## 가방을 여는 동안(시선이 내려가는 동안) 숨긴다.
+func set_hidden(h: bool) -> void:
+	hidden = h
+	_refresh()
+
+
+func _refresh() -> void:
+	var show := active and not hidden
+	finder.visible = show
+	shutter.visible = show
+	shutter.disabled = not show
+	hint.visible = show and not hint_done
 
 
 func on_resized() -> void:
@@ -93,12 +113,12 @@ func on_resized() -> void:
 	finder.cell_px = cell
 	var side := minf(VF_CELLS * cell, 0.8 * minf(vs.x, vs.y))
 	finder.size = Vector2(side, side).round()
-	# 셔터는 칸 느낌이 나게 정수 배로 키우되 손가락 크기(64dp)보다 작아지지 않게
+	# 셔터는 칸 느낌이 나게 정수 배로 키우되 손가락 크기(64dp)보다 작아지지 않게.
+	# 자리는 닫힌 가방의 화살표 위 (시스템 제스처 영역보다도 위)
 	var k := maxf(round(cell), ceilf(dp(64) / SHUTTER_CELLS))
 	shutter.size = Vector2.ONE * SHUTTER_CELLS * k
-	shutter.position = Vector2(round((vs.x - shutter.size.x) * 0.5), vs.y - ins.w - dp(20) - shutter.size.y)
-	dex_btn.size = dex_btn.get_combined_minimum_size()
-	dex_btn.position = Vector2(ins.x + dp(16), shutter.position.y + (shutter.size.y - dex_btn.size.y) * 0.5)
+	var bottom := minf(main.bag.hint_top_px() - dp(14), vs.y - ins.w - dp(20))
+	shutter.position = Vector2(round((vs.x - shutter.size.x) * 0.5), round(bottom - shutter.size.y))
 	hint.size = hint.get_combined_minimum_size()
 	hint.position = Vector2(round((vs.x - hint.size.x) * 0.5), shutter.position.y - dp(12) - hint.size.y)
 	_place_finder()
@@ -152,16 +172,12 @@ func _clamp_frac() -> void:
 
 ## 뷰파인더가 덮는 월드 범위 (배경 칸).
 func finder_world_rect() -> Rect2:
-	var cam_top_left: Vector2 = main.camera.position - main.view_cells * 0.5
+	var cam_top_left: Vector2 = main.view_rect().position
 	return Rect2(cam_top_left + finder.position / main.bg_px, finder.size / main.bg_px)
 
 
-func set_dex_count(found: int, total: int) -> void:
-	dex_btn.text = "도감 %d/%d" % [found, total]
-	dex_btn.size = dex_btn.get_combined_minimum_size()
-
-
 func hide_hint() -> void:
+	hint_done = true
 	hint.visible = false
 
 

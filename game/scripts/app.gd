@@ -9,6 +9,8 @@ extends Node
 ##   --set=<portrait|square|landscape>  배경 벌을 정해 쓴다 (기본은 화면 비율에 가장 가까운 벌)
 ##   --hour=<0~24>    그 시각에 멈춘다 (화면 캡처·시험용)
 ##   --time=<fast|real>  시간: 5분에 하루(fast, 기본) 또는 기기 시계(real)
+##   --tool=<camera|binoculars>  도구를 들고 시작한다 (뷰파인더·셔터가 나온 화면)
+##   --bag=<0~1>      가방 메뉴를 그만큼 연 채로 멈춘다 (화면 캡처용, 1 = 다 열림)
 ##   --bg_ratio=<r> --smooth=<0|1> --snap=<0|1> --ui=<0|1>
 
 signal settings_changed

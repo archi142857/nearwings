@@ -12,7 +12,7 @@ echo "$unit" | grep -v -E "^Godot Engine|^\s*$" | grep -v -E "^\s+(at:|GDScript 
 if echo "$unit" | grep -q -E "SCRIPT ERROR|^ERROR|실패 [1-9]|단위 시험 0개"; then echo "단위 시험 실패"; exit 1; fi
 # 기기마다 새 오는 확률이 같으려면 어느 화면에서나 모든 종이 앉을 자리가 있어야 한다
 python3 -I tools/perch_check.py | tail -n 5
-# 자체 시험: 가상 화면에서 입력을 흉내 내 셔터·배경 벌·뷰파인더·도감·뒤로 가기를 해 본다 (벌 세 가지를 다 거친다)
+# 자체 시험: 가상 화면에서 입력을 흉내 내 가방 여닫기·카메라·셔터·배경 벌·뷰파인더·도감·뒤로 가기를 해 본다 (벌 세 가지를 다 거친다)
 # 태블릿은 세로로 시작해 가로로 돌려 본다(벌이 바뀌고 앉은 새를 다시 앉힌다)
 for dev in "1080x2400 2.625 portrait" "2400x2160 2.625 square" "1600x2560 2.0 portrait --rotate" "2560x1600 2.0 landscape"; do
   set -- $dev

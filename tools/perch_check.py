@@ -74,15 +74,27 @@ def choose(w, h, sets):
     return min(sets, key=lambda s: abs(math.log(a / (sets[s]["size"][0] / sets[s]["size"][1]))))
 
 
+def bag_scale(vw, vh):
+    """bag_layout.gd와 같은 셈: 가방 한 칸이 배경 몇 칸인지 (세로로 긴 화면은 시안 배치, 넓은 화면은 한 줄 배치)."""
+    if vw / vh < 0.75:
+        return min(min(1.0, vh / 480.0), min(1.0, (vw - 10.0) / 206.0))
+    target = vh * (1.0 - 1160.0 / 2400.0)
+    group = 89 * 0.8 + 1.6 + 76 / 5.0     # 가장 큰 도구 그림 + 간격 + 이름표 (가방 칸)
+    return min(1.0, target / (26 + group + 2 * 14 + 42))
+
+
 def landing_rect(w, h, dens, scene):
-    """layout.gd·main.gd·capture_ui.gd와 같은 셈: 꽉 채우는 배율, 가운데 창, 위·아래 버튼 줄을 뺀 곳 (화면 여백 0)."""
+    """layout.gd·main.gd·capture_ui.gd·bag_layout.gd와 같은 셈: 꽉 채우는 배율, 가운데 창, 위 버튼 줄과
+    아래 셔터 줄(닫힌 가방 윗단 16칸과 화살표 위)을 뺀 곳 (화면 여백 0)."""
     px = max(w / scene[0], h / scene[1])
     vw, vh = w / px, h / px
     x0, y0 = (scene[0] - vw) / 2, (scene[1] - vh) / 2
-    dp = lambda v: v * dens
+    dp = lambda v: max(1, round(v * dens))
     top = dp(64)
     k = max(round(px), math.ceil(dp(64) / 22))
-    bottom = h - dp(20) - 22 * k - dp(8)
+    arrows_top = (vh - 28 * bag_scale(vw, vh)) * px
+    shutter_bottom = min(arrows_top - dp(14), h - dp(20))
+    bottom = round(shutter_bottom - 22 * k) - dp(8)
     play = (x0, y0 + top / px, x0 + vw, y0 + bottom / px)
     inner = (play[0] + MARGIN, play[1] + MARGIN, play[2] - MARGIN, play[3] - MARGIN)
     return px, (x0, y0, x0 + vw, y0 + vh), inner

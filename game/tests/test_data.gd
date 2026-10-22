@@ -42,6 +42,9 @@ func test_three_sets_exist_with_right_shapes() -> void:
 		for palette in ["day", "dawn", "evening", "night"]:
 			var baked: Texture2D = load("%s/%s/baked_%s.png" % [HABITAT, set_name, palette])
 			eq(Vector2i(baked.get_size()), s, "%s: 구운 %s 그림 크기 = index 크기" % [set_name, palette])
+			for g in ["ground", "ground_blur"]:   # 가방 메뉴의 발밑 바닥: 장면과 같은 폭, 화면 높이만큼은 내려갈 수 있게
+				var tex: Texture2D = load("%s/%s/%s_%s.png" % [HABITAT, set_name, g, palette])
+				eq(Vector2i(tex.get_size()), s, "%s: %s_%s 크기 = 장면 크기" % [set_name, g, palette])
 
 
 func test_every_species_has_a_perch_kind_in_each_set() -> void:

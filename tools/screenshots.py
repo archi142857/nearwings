@@ -35,7 +35,17 @@ VARIANTS = [
     ("dex_phone", "phone_1080x2400", ["--dex", FOUND, "--save=user://shot_save.json"]),
     ("dex_fold_land", "fold_2400x2160", ["--dex", FOUND, "--save=user://shot_save.json"]),
     ("detail_phone", "phone_1080x2400", ["--dex", "--detail=pica_serica", FOUND, "--save=user://shot_save.json"]),
-    ("shoot_phone", "phone_1080x2400", ["--shoot", "--fresh", "--save=user://shot_save.json"]),
+    # 카메라를 든 화면 (뷰파인더·셔터), 찍은 뒤 알림
+    ("camera_phone", "phone_1080x2400", ["--tool=camera"]),
+    ("shoot_phone", "phone_1080x2400", ["--tool=camera", "--shoot", "--fresh", "--save=user://shot_save.json"]),
+    # 가방 메뉴: 반쯤 연 것, 다 연 것 (폰은 시안과 화소까지 같아야 한다), 넓은 화면은 도구가 한 줄
+    ("bag_half_phone", "phone_1080x2400", ["--bag=0.5"]),
+    ("bag_phone", "phone_1080x2400", ["--bag=1"]),
+    ("bag_fold", "fold_2160x2400", ["--bag=1"]),
+    ("bag_fold_land", "fold_2400x2160", ["--bag=1"]),
+    ("bag_tablet", "tablet_1600x2560", ["--bag=1"]),
+    ("bag_tablet_land", "tablet_2560x1600", ["--bag=1"]),
+    ("bag_night_phone", "phone_1080x2400", ["--bag=1", "--hour=23"]),
     # 시간대: 기본 캡처는 정오(--hour=12)에 멈춰 찍고, 새벽·해 질 녘·밤은 따로 찍는다
     ("dawn_phone", "phone_1080x2400", ["--hour=5.75"]),
     ("dusk_phone", "phone_1080x2400", ["--hour=18.5"]),
@@ -94,6 +104,24 @@ def color_check():
     return good >= need
 
 
+def bag_check():
+    """폰에서 다 연 가방이 디자인 시안(캔버스 '도감 그림 칸'의 가방 속 화면, art/bag/canvas_bag_screen.png)과
+    화소까지 같은지 본다. 바닥은 시안과 다르게 그렸고 도감 그림은 키트 예시 대신 다른 그림을 넣었으니,
+    가방 자리(위에서 1160화소부터)에서 도감 자리만 빼고 견준다."""
+    shot = Image.open(OUT / "bag_phone.png").convert("RGB")
+    ref = Image.open(ROOT / "art/bag/canvas_bag_screen.png").convert("RGB")
+    bad = 0
+    for y in range(1160, 2400):
+        for x in range(25, 1055):
+            if 150 <= x < 440 and 1495 <= y < 1955:   # 도감 그림·그림자·이름표
+                continue
+            p, q = shot.getpixel((x, y)), ref.getpixel((x, y))
+            bad += max(abs(p[i] - q[i]) for i in range(3)) > 2
+    ok = bad == 0
+    print(f"{'ok ' if ok else '!! '} 가방 확인: 폰에서 연 가방이 시안과 {'같다' if ok else f'{bad}화소 다르다'} (도감 자리 빼고)")
+    return ok
+
+
 def sprite_color_check():
     """도감 상세(까치를 크게 그린 화면)에 까치 그림의 색이 그대로 다 나오는지 본다.
     셰이더에서 그림 색을 두 번 곱하는 실수(어두워짐)를 잡으려는 검사다."""
@@ -150,6 +178,7 @@ def main():
         failed += not color_check()
     if not args and not extra:
         failed += not sprite_color_check()
+        failed += not bag_check()
     size = {d[0]: d[1:3] for d in DEVICES}
     dev_of = {v[0]: v[1] for v in VARIANTS}
     labels = {}

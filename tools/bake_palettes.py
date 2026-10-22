@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """서식지 배경 굽기: <벌>/index.png(칸마다 색 번호) + palettes.json(색표들) → <벌>/baked_<색표>.png (1칸 = 1화소).
+발밑 바닥(<벌>/ground_index.png)이 있으면 ground_<색표>.png와 흐린 ground_blur_<색표>.png도 굽는다(가방 메뉴).
 
 서식지마다 세로형·정사각형·가로형 세 벌(portrait, square, landscape)이 있고 색표는 서식지에 하나다.
 게임은 구운 그림을 그리고, 낮·저녁처럼 두 색표 사이는 구운 그림 두 장을 섞어 그린다.
@@ -14,9 +15,11 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage as ndi
 
 ROOT = Path(__file__).resolve().parent.parent
 SETS = ("portrait", "square", "landscape")
+GROUND_BLUR = 1.1   # 가방 메뉴에서 흐려진 발밑 바닥 (가우스 흐림, 칸 단위). 흐린 뒤에도 1칸 = 1화소라 칸 느낌이 남는다
 
 
 def bake(habitat: Path) -> None:
@@ -39,6 +42,15 @@ def bake(habitat: Path) -> None:
             assert index.max() < n, f"{habitat.name}/{s}: 색 번호 {index.max()}가 색표({n}개) 밖"
             Image.fromarray(lut[index], "RGB").save(folder / f"baked_{name}.png")
         done.append(f"{s} {index.shape[1]}×{index.shape[0]}")
+        if (folder / "ground_index.png").exists():   # 발밑 바닥: 또렷한 그림과 흐린 그림 (tools/make_ground.py)
+            g = np.array(Image.open(folder / "ground_index.png").convert("L"))
+            for name, (lut, n) in luts.items():
+                assert g.max() < n, f"{habitat.name}/{s}: 바닥 색 번호 {g.max()}가 색표({n}개) 밖"
+                sharp = lut[g]
+                Image.fromarray(sharp, "RGB").save(folder / f"ground_{name}.png")
+                blur = np.stack([ndi.gaussian_filter(sharp[..., c].astype(float), GROUND_BLUR, mode="nearest") for c in range(3)], -1)
+                Image.fromarray(np.clip(np.round(blur), 0, 255).astype(np.uint8), "RGB").save(folder / f"ground_blur_{name}.png")
+            done[-1] += " + 바닥"
     print(f"{habitat.name}: {', '.join(done)} / 색표 {', '.join(data['order'])} 구움")
 
 
