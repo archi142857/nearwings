@@ -1,0 +1,22 @@
+{
+ "habitat": "urban_river_park",
+ "note": "임시: 시안 장면에서 새가 앉아 있던 자리를 바탕으로 코드 세션이 잡았다. 단위는 배경 칸(월드 480×480). y는 새 발끝이 닿는 면. max_w는 앉을 수 있는 새 그림의 가장 큰 너비(새 칸). shape: point(한 점), segment(a~b 선 위 아무 곳), area(rect 안 아무 곳: 땅·물).",
+ "perches": [
+  {"id": "branch_upper", "kind": "branch", "shape": "segment", "a": [20, 136], "b": [92, 117], "max_w": 45},
+  {"id": "branch_lower", "kind": "branch", "shape": "segment", "a": [20, 228], "b": [108, 219], "max_w": 45},
+  {"id": "lamp", "kind": "lamp", "shape": "segment", "a": [171, 272], "b": [185, 272], "max_w": 48},
+  {"id": "bench", "kind": "bench", "shape": "segment", "a": [250, 357], "b": [267, 357], "max_w": 42},
+  {"id": "reed_1", "kind": "reed", "shape": "point", "a": [375, 292], "max_w": 22},
+  {"id": "reed_2", "kind": "reed", "shape": "point", "a": [400, 289], "max_w": 22},
+  {"id": "reed_3", "kind": "reed", "shape": "point", "a": [412, 289], "max_w": 22},
+  {"id": "reed_4", "kind": "reed", "shape": "point", "a": [431, 288], "max_w": 22},
+  {"id": "reed_5", "kind": "reed", "shape": "point", "a": [455, 294], "max_w": 22},
+  {"id": "river", "kind": "water", "shape": "area", "rect": [30, 284, 350, 326], "max_w": 60},
+  {"id": "river_edge", "kind": "shallow", "shape": "area", "rect": [30, 324, 350, 332], "max_w": 70},
+  {"id": "road", "kind": "ground", "shape": "area", "rect": [20, 352, 470, 362], "max_w": 70},
+  {"id": "path", "kind": "ground", "shape": "area", "rect": [20, 366, 470, 370], "max_w": 70},
+  {"id": "grass_1", "kind": "grass", "shape": "area", "rect": [10, 380, 470, 410], "max_w": 70},
+  {"id": "grass_2", "kind": "grass", "shape": "area", "rect": [10, 427, 470, 438], "max_w": 70},
+  {"id": "grass_3", "kind": "grass", "shape": "area", "rect": [10, 456, 470, 476], "max_w": 70}
+ ]
+}

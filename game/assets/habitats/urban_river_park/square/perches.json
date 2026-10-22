@@ -1,0 +1,191 @@
+{
+ "habitat": "urban_river_park",
+ "set": "square",
+ "size": [
+  480,
+  480
+ ],
+ "note": "임시: tools/temp_sets.py가 디자인 캔버스 월드(art/habitats)에서 잘라 만든 벌. 단위는 이 벌의 배경 칸. y는 새 발끝이 닿는 면. max_w는 앉을 수 있는 새 그림의 가장 큰 너비(새 칸).",
+ "perches": [
+  {
+   "id": "branch_upper",
+   "kind": "branch",
+   "shape": "segment",
+   "a": [
+    44.0,
+    136.0
+   ],
+   "b": [
+    116.0,
+    117.0
+   ],
+   "max_w": 45
+  },
+  {
+   "id": "branch_lower",
+   "kind": "branch",
+   "shape": "segment",
+   "a": [
+    44.0,
+    228.0
+   ],
+   "b": [
+    132.0,
+    219.0
+   ],
+   "max_w": 45
+  },
+  {
+   "id": "lamp",
+   "kind": "lamp",
+   "shape": "segment",
+   "a": [
+    195.0,
+    272.0
+   ],
+   "b": [
+    209.0,
+    272.0
+   ],
+   "max_w": 48
+  },
+  {
+   "id": "bench",
+   "kind": "bench",
+   "shape": "segment",
+   "a": [
+    274.0,
+    357.0
+   ],
+   "b": [
+    291.0,
+    357.0
+   ],
+   "max_w": 42
+  },
+  {
+   "id": "reed_1",
+   "kind": "reed",
+   "shape": "point",
+   "a": [
+    399,
+    292
+   ],
+   "max_w": 22
+  },
+  {
+   "id": "reed_2",
+   "kind": "reed",
+   "shape": "point",
+   "a": [
+    424,
+    289
+   ],
+   "max_w": 22
+  },
+  {
+   "id": "reed_3",
+   "kind": "reed",
+   "shape": "point",
+   "a": [
+    436,
+    289
+   ],
+   "max_w": 22
+  },
+  {
+   "id": "reed_4",
+   "kind": "reed",
+   "shape": "point",
+   "a": [
+    455,
+    288
+   ],
+   "max_w": 22
+  },
+  {
+   "id": "river",
+   "kind": "water",
+   "shape": "area",
+   "rect": [
+    54.0,
+    284.0,
+    374.0,
+    326.0
+   ],
+   "max_w": 60
+  },
+  {
+   "id": "river_edge",
+   "kind": "shallow",
+   "shape": "area",
+   "rect": [
+    54.0,
+    324.0,
+    374.0,
+    332.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "road",
+   "kind": "ground",
+   "shape": "area",
+   "rect": [
+    44.0,
+    352.0,
+    480,
+    362.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "path",
+   "kind": "ground",
+   "shape": "area",
+   "rect": [
+    44.0,
+    366.0,
+    480,
+    370.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_1",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    34.0,
+    380.0,
+    480,
+    410.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_2",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    34.0,
+    427.0,
+    480,
+    438.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_3",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    34.0,
+    456.0,
+    480,
+    476.0
+   ],
+   "max_w": 70
+  }
+ ]
+}

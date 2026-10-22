@@ -1,0 +1,137 @@
+{
+ "habitat": "urban_river_park",
+ "set": "portrait",
+ "size": [
+  240,
+  480
+ ],
+ "note": "임시: tools/temp_sets.py가 디자인 캔버스 월드(art/habitats)에서 잘라 만든 벌. 단위는 이 벌의 배경 칸. y는 새 발끝이 닿는 면. max_w는 앉을 수 있는 새 그림의 가장 큰 너비(새 칸).",
+ "perches": [
+  {
+   "id": "branch_upper",
+   "kind": "branch",
+   "shape": "segment",
+   "a": [
+    32.0,
+    136.0
+   ],
+   "b": [
+    104.0,
+    117.0
+   ],
+   "max_w": 45
+  },
+  {
+   "id": "branch_lower",
+   "kind": "branch",
+   "shape": "segment",
+   "a": [
+    32.0,
+    228.0
+   ],
+   "b": [
+    120.0,
+    219.0
+   ],
+   "max_w": 45
+  },
+  {
+   "id": "lamp",
+   "kind": "lamp",
+   "shape": "segment",
+   "a": [
+    183.0,
+    272.0
+   ],
+   "b": [
+    197.0,
+    272.0
+   ],
+   "max_w": 48
+  },
+  {
+   "id": "river",
+   "kind": "water",
+   "shape": "area",
+   "rect": [
+    42.0,
+    284.0,
+    240,
+    326.0
+   ],
+   "max_w": 60
+  },
+  {
+   "id": "river_edge",
+   "kind": "shallow",
+   "shape": "area",
+   "rect": [
+    42.0,
+    324.0,
+    240,
+    332.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "road",
+   "kind": "ground",
+   "shape": "area",
+   "rect": [
+    32.0,
+    352.0,
+    240,
+    362.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "path",
+   "kind": "ground",
+   "shape": "area",
+   "rect": [
+    32.0,
+    366.0,
+    240,
+    370.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_1",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    22.0,
+    380.0,
+    240,
+    410.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_2",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    22.0,
+    427.0,
+    240,
+    438.0
+   ],
+   "max_w": 70
+  },
+  {
+   "id": "grass_3",
+   "kind": "grass",
+   "shape": "area",
+   "rect": [
+    22.0,
+    456.0,
+    240,
+    476.0
+   ],
+   "max_w": 70
+  }
+ ]
+}

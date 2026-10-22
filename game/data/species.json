@@ -1,0 +1,15 @@
+{
+ "note": "0단계 10종. ID는 AviList v2025b 학명(소문자_밑줄). 몸길이와 칸 수는 디자인 캔버스 Pg_Lineup 기준(왜가리는 키). flight: undulating 파도형, direct 직선형, slow 느린 날갯짓. perches: 앉을 수 있는 횃대 종류.",
+ "species": [
+  {"id": "pica_serica", "ko": "까치", "en": "Oriental Magpie", "sci": "Pica serica", "length_cm": 46, "cells": 41, "season": "R", "flight": "direct", "perches": ["branch", "lamp", "bench", "ground", "grass"]},
+  {"id": "hypsipetes_amaurotis", "ko": "직박구리", "en": "Brown-eared Bulbul", "sci": "Hypsipetes amaurotis", "length_cm": 28, "cells": 29, "season": "R", "flight": "undulating", "perches": ["branch", "lamp", "reed"]},
+  {"id": "parus_minor", "ko": "박새", "en": "Japanese Tit", "sci": "Parus minor", "length_cm": 14, "cells": 18, "season": "R", "flight": "undulating", "perches": ["branch", "reed", "bench"]},
+  {"id": "passer_montanus", "ko": "참새", "en": "Eurasian Tree Sparrow", "sci": "Passer montanus", "length_cm": 14, "cells": 18, "season": "R", "flight": "undulating", "perches": ["branch", "reed", "bench", "ground", "grass"]},
+  {"id": "streptopelia_orientalis", "ko": "멧비둘기", "en": "Oriental Turtle Dove", "sci": "Streptopelia orientalis", "length_cm": 33, "cells": 32, "season": "R", "flight": "direct", "perches": ["branch", "lamp", "bench", "ground", "grass"]},
+  {"id": "corvus_macrorhynchos", "ko": "큰부리까마귀", "en": "Large-billed Crow", "sci": "Corvus macrorhynchos", "length_cm": 57, "cells": 47, "season": "R", "flight": "direct", "perches": ["lamp", "branch", "ground", "grass"]},
+  {"id": "poecile_palustris", "ko": "쇠박새", "en": "Marsh Tit", "sci": "Poecile palustris", "length_cm": 12.5, "cells": 17, "season": "R", "flight": "undulating", "perches": ["branch", "reed"]},
+  {"id": "anas_platyrhynchos", "ko": "청둥오리", "en": "Mallard", "sci": "Anas platyrhynchos", "length_cm": 58, "cells": 48, "season": "W", "flight": "direct", "speed": 88, "swims": true, "perches": ["water", "grass"]},
+  {"id": "ardea_cinerea", "ko": "왜가리", "en": "Grey Heron", "sci": "Ardea cinerea", "length_cm": 86, "cells": 62, "season": "S", "flight": "slow", "perches": ["shallow", "grass"]},
+  {"id": "suthora_webbiana", "ko": "붉은머리오목눈이", "en": "Vinous-throated Parrotbill", "sci": "Suthora webbiana", "length_cm": 12.5, "cells": 17, "season": "R", "flight": "undulating", "perches": ["reed", "branch"]}
+ ]
+}

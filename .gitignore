@@ -1,0 +1,5 @@
+# Godot 가져오기 캐시와 빌드 결과
+game/.godot/
+build/
+*.tmp
+__pycache__/

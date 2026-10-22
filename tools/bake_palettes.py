@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""서식지 배경 굽기: <벌>/index.png(칸마다 색 번호) + palettes.json(색표들) → <벌>/baked_<색표>.png (1칸 = 1화소).
+
+서식지마다 세로형·정사각형·가로형 세 벌(portrait, square, landscape)이 있고 색표는 서식지에 하나다.
+게임은 구운 그림을 그리고, 낮·저녁처럼 두 색표 사이는 구운 그림 두 장을 섞어 그린다.
+칸마다 색만 바뀌므로 두 그림을 섞는 것은 색표를 섞는 것과 같다. 위젯도 구운 그림을 그대로 쓴다.
+원본은 index.png와 palettes.json이고, 구운 그림은 이 도구로 언제든 다시 만든다.
+
+사용법: python3 tools/bake_palettes.py [서식지 폴더 ...]  (생략하면 game/assets/habitats/* 전부)
+"""
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+ROOT = Path(__file__).resolve().parent.parent
+SETS = ("portrait", "square", "landscape")
+
+
+def bake(habitat: Path) -> None:
+    data = json.loads((habitat / "palettes.json").read_text(encoding="utf-8"))
+    luts = {}
+    for name in data["order"]:
+        cols = data["palettes"][name]
+        lut = np.zeros((256, 3), np.uint8)
+        for i, h in enumerate(cols):
+            h = h.lstrip("#")
+            lut[i] = [int(h[k:k + 2], 16) for k in (0, 2, 4)]
+        luts[name] = (lut, len(cols))
+    done = []
+    for s in SETS:
+        folder = habitat / s
+        if not (folder / "index.png").exists():
+            continue
+        index = np.array(Image.open(folder / "index.png").convert("L"))
+        for name, (lut, n) in luts.items():
+            assert index.max() < n, f"{habitat.name}/{s}: 색 번호 {index.max()}가 색표({n}개) 밖"
+            Image.fromarray(lut[index], "RGB").save(folder / f"baked_{name}.png")
+        done.append(f"{s} {index.shape[1]}×{index.shape[0]}")
+    print(f"{habitat.name}: {', '.join(done)} / 색표 {', '.join(data['order'])} 구움")
+
+
+def main() -> None:
+    folders = [Path(a) for a in sys.argv[1:]] or sorted((ROOT / "game/assets/habitats").iterdir())
+    for f in folders:
+        if (f / "palettes.json").exists():
+            bake(f)
+
+
+if __name__ == "__main__":
+    main()
