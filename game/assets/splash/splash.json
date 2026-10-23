@@ -1,21 +1,22 @@
 {
- "note": "tools/splash_import.py가 art/splash/layout.json에서 만든다. 칸 좌표는 캔버스(full.png) 기준",
- "paper": "#efe6d2",
- "ink": "#2e2922",
+ "note": "tools/splash_import.py가 art/splash/의 디자인 원본과 배치값(design_layout.json)에서 만든다. 칸 좌표는 캔버스(full.png = 원본 둘레에 종이색 pad칸) 기준",
+ "paper": "#EFE6D2",
+ "ink": "#2E2922",
+ "pad": 8,
  "canvas_cells": [
-  264,
-  357
+  283,
+  333
  ],
  "icon_center": [
-  153.0,
-  104.0
+  168.0,
+  80.0
  ],
  "icon_cells": 128,
  "magpie_bbox": [
-  8,
-  51,
-  256,
-  349
+  23,
+  27,
+  271,
+  325
  ],
  "reference_screen": [
   1080,
@@ -23,8 +24,8 @@
  ],
  "reference_cell_px": 3,
  "canvas_from_center": [
-  -128.66666666666666,
-  -239.33333333333334
+  -143.66666666666666,
+  -215.33333333333334
  ],
  "name_top_from_center": 146.66666666666666,
  "name_cell_ratio": 2.6666666666666665,

@@ -153,7 +153,8 @@ func _save_frame() -> void:
 	img.save_png("%s/f%03d.png" % [recording, rec_frame])
 	rec_frame += 1
 	if rec_frame / RECORD_FPS > SplashPlan.FADE_END + 0.1:
-		get_tree().quit()
+		RenderingServer.frame_post_draw.disconnect(_save_frame)
+		App.quit()
 
 
 func _finish() -> void:

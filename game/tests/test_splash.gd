@@ -29,9 +29,11 @@ func test_short() -> void:
 
 
 func test_reference_phone_matches_design() -> void:
-	var p := SplashPlan.plan(Vector2(1080, 2400), 2.625, data())
+	var d := data()
+	var p := SplashPlan.plan(Vector2(1080, 2400), 2.625, d)
 	eq(p["k"], 3, "1080 폭 폰은 칸당 3화소")
-	eq(p["origin_final"], Vector2(154, 482), "디자인 마지막 화면 자리")
+	# 디자인 배치값(art/splash/design_layout.json): 까치 원본 왼쪽 위 (133, 578). 게임 캔버스는 둘레에 pad칸을 둔다
+	eq(p["origin_final"] + Vector2.ONE * float(d["pad"]) * 3.0, Vector2(133, 578), "디자인 마지막 화면 자리")
 	eq(p["name_top"], 1640.0, "이름 위")
 	eq(p["name_px"], 8, "이름 글자 칸 8배")
 	near(p["s0"], 3.9375, 1e-6, "첫 장면 칸당 화소 = 192dp ÷ 128칸")

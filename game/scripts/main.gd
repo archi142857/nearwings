@@ -1,8 +1,8 @@
 extends Node2D
-## 0단계 시험판: 로딩 화면, 배경, 새, 가방 메뉴, 뷰파인더와 셔터, 도감, 시험용 설정.
+## 0단계 시험판: 로딩 화면, 배경, 새, 가방 메뉴, 뷰파인더와 셔터, 도감, 공원 음악(시험 줄기), 시험용 설정.
 ## 배경은 서식지마다 세로형·정사각형·가로형 세 벌이고, 화면 비율에 가장 가까운 벌을 화면에 꽉 차게 그린다
 ## (결정 기록 2026-10-22). 화면은 고정이고 밀어서 둘러보지 않는다. 회전·접기·창 크기가 바뀌면 벌을 다시 고른다.
-## 배경과 새 빛깔은 시간대(새벽·낮·저녁·밤)를 따른다. 시간은 5분에 하루가 지나거나(기본) 기기 시계를 따른다(시험용 설정).
+## 배경과 새 빛깔은 시간대(새벽·낮·저녁·밤)를 따른다. 게임 시간은 기기 시계다(결정 기록 2026-10-23).
 ## 기본 화면에는 뷰파인더와 셔터가 없다. 위로 밀어 가방을 열고 카메라나 쌍안경을 꺼내면 나온다(0단계는 둘이 같다).
 ## 장면 좌표 단위는 배경 칸이고, 카메라 확대 배율이 곧 '배경 한 칸 = 몇 화소'다.
 
@@ -31,6 +31,7 @@ var bag: CanvasLayer
 var dex_ui: CanvasLayer
 var debug_ui: CanvasLayer
 var splash: CanvasLayer = null      # 로딩 화면 (켤 때 한 번, 끝나면 스스로 사라진다)
+var music: Node                     # 공원 음악 (시험 줄기, 시험용 설정에서 끌 수 있다)
 var set_sizes := {}                 # 벌 이름 → 장면 크기(칸)
 var set_perches := {}               # 벌 이름 → Perches
 var scene_set := ""                 # 지금 쓰는 벌
@@ -44,11 +45,8 @@ var touch := Touch.NONE
 var touch_start := Vector2.ZERO
 var touch_tool := ""
 var capture_left := -1
-var clock_hour := 12.0              # 게임 시각 (0~24시)
-var clock_start := 12.0             # 빠른 시간이 시작한 시각
-var clock_elapsed := 0.0            # 빠른 시간이 시작하고 지난 초
+var clock_hour := 12.0              # 게임 시각 (0~24시) = 기기 시계
 var clock_frozen := false           # --hour: 그 시각에 멈춤 (화면 캡처·시험용)
-var time_mode := ""
 
 
 func _ready() -> void:
@@ -112,14 +110,16 @@ func _ready() -> void:
 	add_child(debug_ui)
 	debug_ui.setup(self)
 
-	# 시간: 처음에는 기기 시계의 지금 시각에서 시작한다
+	music = preload("res://scripts/audio/park_music.gd").new()
+	add_child(music)
+	music.setup(self)
+
+	# 시간: 기기 시계 (화면 캡처·시험은 --hour로 멈춘다)
 	if App.args.has("hour"):
-		clock_start = float(App.args["hour"])
+		clock_hour = float(App.args["hour"])
 		clock_frozen = true
 	else:
-		clock_start = TimeOfDay.real_hour()
-	clock_hour = clock_start
-	time_mode = String(App.settings["time_mode"])
+		clock_hour = TimeOfDay.real_hour()
 
 	get_tree().root.size_changed.connect(_on_resized)
 	App.settings_changed.connect(_apply_settings)
@@ -201,23 +201,14 @@ func _apply_settings() -> void:
 	bird_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	dex_ui.shadow_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
 	bag.shadow_mat.set_shader_parameter("smooth_edges", bool(App.settings["smooth_edges"]))
-	var mode := String(App.settings["time_mode"])
-	if mode != time_mode:
-		time_mode = mode
-		if mode == "fast":   # 빠른 시간으로 바꾸면 지금 시각에서 이어서 흐른다
-			clock_start = clock_hour
-			clock_elapsed = 0.0
+	music.set_enabled(bool(App.settings["sound"]))
 	_place_camera()
 
 
-## 시각을 흐르게 하고, 배경과 새 빛깔을 그 시각에 맞춘다.
-func _tick_clock(delta: float) -> void:
+## 시각을 기기 시계에 맞추고, 배경과 새 빛깔을 그 시각에 맞춘다.
+func _tick_clock() -> void:
 	if not clock_frozen:
-		if time_mode == "real":
-			clock_hour = TimeOfDay.real_hour()
-		else:
-			clock_elapsed += delta
-			clock_hour = TimeOfDay.fast_hour(clock_start, clock_elapsed)
+		clock_hour = TimeOfDay.real_hour()
 	_apply_time()
 
 
@@ -291,7 +282,7 @@ func _notification(what: int) -> void:
 		if tool != "":
 			_hold("")
 			return
-		get_tree().quit()
+		App.quit()
 
 
 ## 손가락 조작.
@@ -388,7 +379,7 @@ func _touch_up(p: Vector2) -> void:
 
 
 func _process(delta: float) -> void:
-	_tick_clock(delta)
+	_tick_clock()
 	_place_camera()
 	if bag.is_busy() and not capture_ui.hidden:
 		capture_ui.set_hidden(true)
@@ -415,4 +406,4 @@ func _capture() -> void:
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(String(App.args["capture"]))
-	get_tree().quit()
+	App.quit()

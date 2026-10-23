@@ -2,7 +2,8 @@ extends Node
 ## 자체 시험 (--selftest): 실제 입력을 흉내 내서 가방 메뉴, 카메라, 셔터, 뷰파인더, 도감, 뒤로 가기를 차례로 해 본다.
 ## 실행: tools/check.sh 가 가상 화면에서 돌린다. 하나라도 틀리면 종료 코드 1.
 ## --expect_set=<벌 이름>을 주면 그 화면에서 그 벌을 골랐는지도 본다. --rotate면 화면을 돌려 본다.
-## --splash_live면 로딩 화면을 띄운 채 시작해서 눌러 넘기기부터 해 본다.
+## --splash_live면 로딩 화면을 띄운 채 시작해서 눌러 넘기기부터 해 본다. 소리가 켜져 있으면(기본) 공원 음악과
+## 가방 먹먹함도 보고, --sound=0이면 음악이 돌지 않는지 본다. 끝으로 게임 시각이 기기 시계를 따르는지 본다.
 
 var main: Node
 var failures: Array[String] = []
@@ -68,6 +69,12 @@ func run(main_node: Node) -> void:
 	_check(absf(main.camera.position.y - main.cam_base.y - main.view_cells.y) < 1.0, "시선이 화면 높이만큼 내려갔다")
 	var top_share: float = bag.top_px() / vs.y
 	_check(top_share > 0.4 and top_share < 0.6, "열린 가방은 화면 아래쪽 반쯤 (윗단 %.2f)" % top_share)
+	if bool(App.settings["sound"]):   # 공원 음악이 돌고, 가방을 열면 World 버스가 먹먹해진다
+		_check(main.music.player.playing, "소리: 공원 음악이 돈다")
+		var lp := AudioServer.get_bus_effect(AudioServer.get_bus_index("World"), 0) as AudioEffectLowPassFilter
+		_check(lp != null and lp.cutoff_hz < 1500.0, "소리: 가방을 열면 공원 소리가 먹먹하다 (%s Hz)" % (str(lp.cutoff_hz) if lp else "-"))
+	else:
+		_check(not main.music.player.playing, "소리를 끄면 공원 음악이 돌지 않는다")
 
 	# 5. 가방에서 도감을 누르면 도감이 열리고, 뒤로 가기로 닫으면 가방이 그대로 있다
 	await _click(bag.item_center("dogam"))
@@ -81,6 +88,9 @@ func run(main_node: Node) -> void:
 	await _click(bag.item_center("camera"))
 	await _until(func() -> bool: return bag.is_closed(), 3.0)
 	_check(main.tool == "camera" and cu.finder.visible and cu.shutter.visible, "카메라를 꺼내면 뷰파인더와 셔터가 나온다")
+	if bool(App.settings["sound"]):
+		var lp2 := AudioServer.get_bus_effect(AudioServer.get_bus_index("World"), 0) as AudioEffectLowPassFilter
+		_check(lp2 != null and lp2.cutoff_hz > 15000.0, "소리: 가방을 닫으면 다시 또렷하다 (%s Hz)" % (str(lp2.cutoff_hz) if lp2 else "-"))
 	_check(cu.shutter.get_rect().end.y <= bag.hint_top_px() + 1.0, "셔터는 가방 윗단·화살표 위에 있다")
 
 	# 7. 앉은 새에 맞추고 셔터를 누르면 도감에 오른다 (앉은 새가 보일 때까지 최대 10초 기다린다)
@@ -167,10 +177,16 @@ func run(main_node: Node) -> void:
 		var br: Rect2 = bag.bag_rect_px()
 		_check(bag.is_open() and br.position.x >= 0.0 and br.end.x <= vs2.x + 1.0, "돌린 뒤 가방이 화면 안에 열린다: %s" % str(br))
 
+	# 14. 게임 시각은 기기 시계다 (결정 기록 2026-10-23). --hour로 멈춘 것을 풀면 기기 시각으로 간다
+	main.clock_frozen = false
+	await _frames(2)
+	var dh := absf(main.clock_hour - TimeOfDay.real_hour())
+	_check(minf(dh, 24.0 - dh) < 1.0 / 60.0, "게임 시각은 기기 시계 (%s, 기기 %s)" % [TimeOfDay.format(main.clock_hour), TimeOfDay.format(TimeOfDay.real_hour())])
+
 	for f in failures:
 		printerr("자체 시험 실패: " + f)
 	print("자체 시험 %s (배경 %s)" % ["통과" if failures.is_empty() else "실패 %d건" % failures.size(), main.scene_set])
-	main.get_tree().quit(0 if failures.is_empty() else 1)
+	App.quit(0 if failures.is_empty() else 1)
 
 
 func _open_bag(vs: Vector2) -> void:

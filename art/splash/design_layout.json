@@ -1,0 +1,75 @@
+{
+ "what": "로딩 화면과 앱 아이콘 원본의 배치값 (디자인 세션, 2026-10-23).",
+ "grid": {
+  "cell_world_units": 1.5,
+  "bird_bbox_world": [
+   -130,
+   -235,
+   270,
+   240
+  ],
+  "canvas_cells": [
+   267,
+   317
+  ],
+  "note": "까치 그림 한 칸 = 1.5 단위. 모든 까치·아이콘 그림이 이 격자를 쓴다."
+ },
+ "paper": "#EFE6D2",
+ "name_color": "#2E2922",
+ "icon_b": {
+  "window_cells": {
+   "x": 96,
+   "y": 8,
+   "size": 128
+  },
+  "file": "아이콘/icon_b_paper_1x.png",
+  "note": "앞 층(뒤 날개 뺀 것)에서 자른 128칸. 1024px 아이콘에서 한 칸 = 8px."
+ },
+ "adaptive": {
+  "window_cells": {
+   "x": 64,
+   "y": -24,
+   "size": 192
+  },
+  "file": "아이콘/adaptive_foreground_1x.png",
+  "note": "108dp 레이어 = 아이콘 B 창을 사방으로 1/4씩 넓힌 192칸, 바탕 투명(검정·흰 바탕에 두 번 그려 알파를 얻음)."
+ },
+ "final_screen_1080x2400": {
+  "cell_px": 3.0,
+  "bird_topleft_px": [
+   133.0,
+   578.0
+  ],
+  "bird_file": "까치/magpie_full_paper_1x.png",
+  "name": {
+   "glyph_scale": 8,
+   "top_px": 1640,
+   "x": "가운데: (1080 - 이름 폭) // 2"
+  }
+ },
+ "first_frame": {
+  "cell_px": 3.9375,
+  "circle_diameter_dp": 192,
+  "dp_px": 2.625,
+  "anchor": "아이콘 B 창 가운데가 화면 가운데",
+  "layer": "앞 층(뒤 날개 없음)"
+ },
+ "names": {
+  "ko": {
+   "file": "이름/name_ko_1x.png",
+   "text": "새바라기",
+   "size_px_1x": [
+    46,
+    11
+   ]
+  },
+  "en": {
+   "file": "이름/name_en_1x.png",
+   "text": "NearWings",
+   "size_px_1x": [
+    67,
+    13
+   ]
+  }
+ }
+}

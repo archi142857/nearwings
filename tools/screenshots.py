@@ -83,7 +83,7 @@ def capture(name, w, h, dens, extra, scene_args=("--prewarm", "--hour=12")):
         out.unlink()
     cmd = ["xvfb-run", "-a", "-s", "-screen 0 3200x3200x24", godot_path(), "--path", str(ROOT / "game"),
            "--rendering-driver", "opengl3", "--audio-driver", "Dummy", "--resolution", f"{w}x{h}", "--position", "0,0", "--",
-           f"--capture={out}", f"--density={dens}", "--seed=7", "--frames=40", *scene_args, *extra]
+           f"--capture={out}", f"--density={dens}", "--seed=7", "--frames=40", "--sound=0", *scene_args, *extra]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     errors = [l for l in (r.stdout + r.stderr).splitlines() if ("ERROR" in l or "SCRIPT ERROR" in l) and "ALSA" not in l and "audio" not in l.lower()]
     ok = out.exists() and Image.open(out).size == (w, h)

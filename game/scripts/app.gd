@@ -7,10 +7,10 @@ extends Node
 ##   --seed=<n>       새 움직임을 매번 같게
 ##   --prewarm        새를 처음부터 앉혀 둔다
 ##   --set=<portrait|square|landscape>  배경 벌을 정해 쓴다 (기본은 화면 비율에 가장 가까운 벌)
-##   --hour=<0~24>    그 시각에 멈춘다 (화면 캡처·시험용)
-##   --time=<fast|real>  시간: 5분에 하루(fast, 기본) 또는 기기 시계(real)
+##   --hour=<0~24>    그 시각에 멈춘다 (화면 캡처·시험용. 게임 시간은 기기 시계다)
 ##   --tool=<camera|binoculars>  도구를 들고 시작한다 (뷰파인더·셔터가 나온 화면)
 ##   --bag=<0~1>      가방 메뉴를 그만큼 연 채로 멈춘다 (화면 캡처용, 1 = 다 열림)
+##   --sound=<0|1>    공원 음악(시간대 섞기 시험 줄기)을 켜고 끈다 (기본 켬)
 ##   --bg_ratio=<r> --smooth=<0|1> --snap=<0|1> --ui=<0|1>
 
 signal settings_changed
@@ -21,8 +21,8 @@ var settings := {
 	"bg_ratio": 1.25,       # 배경 칸이 새 칸의 몇 배인지 (결정 기록: 1.25)
 	"smooth_edges": true,   # 정수가 아닌 배율에서 칸 경계만 1화소 안에서 섞기
 	"snap_motion": false,   # 새와 화면을 칸 단위로 끊어 움직이기 (비교용)
-	"time_mode": "fast",    # 시간 흐름: fast = 5분에 하루, real = 기기 시계 (둘 중 하나로 정하기 전 시험용)
 	"show_ui": true,
+	"sound": true,          # 공원 음악. 지금은 사운드 세션의 시간대 섞기 시험 줄기다 (M6부터 소리를 넣는다, 결정 기록 2026-10-23)
 }
 
 
@@ -37,21 +37,36 @@ func _ready() -> void:
 		rng.randomize()
 	if args.has("bg_ratio"):
 		settings["bg_ratio"] = float(args["bg_ratio"])
-	if args.has("time"):
-		settings["time_mode"] = "real" if args["time"] == "real" else "fast"
 	if args.has("smooth"):
 		settings["smooth_edges"] = args["smooth"] != "0"
 	if args.has("snap"):
 		settings["snap_motion"] = args["snap"] != "0"
 	if args.has("ui"):
 		settings["show_ui"] = args["ui"] != "0"
+	if args.has("sound"):
+		settings["sound"] = args["sound"] != "0"
 	get_tree().root.size_changed.connect(apply_orientation_policy)
 	apply_orientation_policy()
+	if not OS.has_feature("mobile"):
+		get_tree().auto_accept_quit = false   # 데스크톱 창 닫기도 quit()으로 (소리를 먼저 멈춘다)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
+		quit()
 
 
 func set_setting(key: String, value: Variant) -> void:
 	settings[key] = value
 	settings_changed.emit()
+
+
+## 앱을 끝낸다. 소리를 먼저 멈추고 오디오 서버가 재생을 치울 틈(0.1초)을 준 뒤 끝낸다.
+## 그냥 끝내면 오디오 서버가 아직 잡고 있는 재생 때문에 '자원이 남았다(resources still in use)' 알림이 뜬다.
+func quit(code := 0) -> void:
+	get_tree().call_group("sound_players", "stop_now")
+	await get_tree().create_timer(0.1).timeout
+	get_tree().quit(code)
 
 
 ## 1dp가 몇 화소인지.

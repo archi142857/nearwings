@@ -1,6 +1,6 @@
 class_name TimeOfDay
 extends RefCounted
-## 하루 시간대. 배경은 시간대에 따라 바뀐다(결정 기록 2026-10-22).
+## 하루 시간대. 배경은 시간대에 따라 바뀐다(결정 기록 2026-10-22). 게임 시간은 기기 시계다(2026-10-23).
 ## 시각(0~24시)마다 섞을 색표 두 장과 섞는 정도, 새 빛깔을 정한다. 상태가 없는 함수만 둔다 (단위 시험 대상).
 
 ## [시각, 색표]. 이웃한 두 점 사이는 부드럽게 섞는다. 새벽 5:45, 낮 7:00~17:00, 해 질 녘 18:30, 밤 20:00~4:30.
@@ -16,7 +16,6 @@ const BIRD_TINT := {
 	"night": Color(0.60, 0.64, 0.80),
 }
 const LABELS := {"night": "밤", "dawn": "새벽", "day": "낮", "evening": "저녁"}
-const FAST_DAY_SEC := 300.0   # 빠른 시간: 5분에 하루
 
 
 ## [색표 a, 색표 b, 섞는 정도 0~1].
@@ -40,11 +39,6 @@ static func bird_tint(hour: float) -> Color:
 static func phase(hour: float) -> String:
 	var b := blend(hour)
 	return b[0] if b[2] < 0.5 else b[1]
-
-
-## 빠른 시간: 시작 시각에서 day_sec초에 하루가 지나게.
-static func fast_hour(start_hour: float, elapsed_sec: float, day_sec := FAST_DAY_SEC) -> float:
-	return fposmod(start_hour + elapsed_sec / day_sec * 24.0, 24.0)
 
 
 ## 기기 시계의 지금 시각 (0~24).

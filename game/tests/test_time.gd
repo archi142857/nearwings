@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## 시간대: 시각 → 색표 섞기, 빠른 시간(5분에 하루) 셈 (03_개발 계획 '시간대').
+## 시간대: 시각 → 색표 섞기, 게임 시각 = 기기 시계 (03_개발 계획 '시간대', 결정 기록 2026-10-23).
 
 
 func test_blend_at_key_hours() -> void:
@@ -31,10 +31,13 @@ func test_blend_t_in_range() -> void:
 		check(b[2] >= 0.0 and b[2] <= 1.0, "%.2f시 섞는 정도 %.3f" % [i * 0.25, b[2]])
 
 
-func test_fast_day_is_five_minutes() -> void:
-	near(TimeOfDay.fast_hour(6.0, 300.0), 6.0, 1e-6, "5분이면 하루가 지나 같은 시각")
-	near(TimeOfDay.fast_hour(0.0, 150.0), 12.0, 1e-6, "2분 30초면 12시간")
-	near(TimeOfDay.fast_hour(23.0, 12.5), 0.0, 1e-6, "자정을 넘으면 0시부터")
+func test_real_hour_is_device_clock() -> void:
+	var t := Time.get_time_dict_from_system()
+	var h := TimeOfDay.real_hour()
+	check(h >= 0.0 and h < 24.0, "0~24시 (%.4f)" % h)
+	var expect := float(t["hour"]) + float(t["minute"]) / 60.0 + float(t["second"]) / 3600.0
+	var d := absf(h - expect)
+	check(minf(d, absf(d - 24.0)) < 2.0 / 3600.0, "기기 시계와 같다 (%.4f, %.4f)" % [h, expect])
 
 
 func test_format() -> void:
