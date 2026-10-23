@@ -1,5 +1,5 @@
 extends Node2D
-## 0단계 시험판: 배경, 새, 가방 메뉴, 뷰파인더와 셔터, 도감, 시험용 설정.
+## 0단계 시험판: 로딩 화면, 배경, 새, 가방 메뉴, 뷰파인더와 셔터, 도감, 시험용 설정.
 ## 배경은 서식지마다 세로형·정사각형·가로형 세 벌이고, 화면 비율에 가장 가까운 벌을 화면에 꽉 차게 그린다
 ## (결정 기록 2026-10-22). 화면은 고정이고 밀어서 둘러보지 않는다. 회전·접기·창 크기가 바뀌면 벌을 다시 고른다.
 ## 배경과 새 빛깔은 시간대(새벽·낮·저녁·밤)를 따른다. 시간은 5분에 하루가 지나거나(기본) 기기 시계를 따른다(시험용 설정).
@@ -14,6 +14,7 @@ const BIRD_BLUR := 0.9                           # 그때 새를 흐리는 정�
 const DRAG_DP := 10.0                            # 이만큼 움직여야 '밀기'로 본다
 const EDGE_DP := 24.0                            # 맨 아래 가장자리: 안드로이드·iOS 홈 제스처 자리라 위로 밀기를 받지 않는다
 const CAPTURE_TOOLS := ["camera", "binoculars"]  # 뷰파인더와 셔터를 쓰는 도구 (0단계는 둘이 같다)
+const SPLASH := preload("res://scripts/ui/splash.gd")
 
 enum Touch { NONE, PENDING, FINDER, OPEN_DRAG, CLOSE_DRAG, TOOL }
 
@@ -29,6 +30,7 @@ var capture_ui: CanvasLayer
 var bag: CanvasLayer
 var dex_ui: CanvasLayer
 var debug_ui: CanvasLayer
+var splash: CanvasLayer = null      # 로딩 화면 (켤 때 한 번, 끝나면 스스로 사라진다)
 var set_sizes := {}                 # 벌 이름 → 장면 크기(칸)
 var set_perches := {}               # 벌 이름 → Perches
 var scene_set := ""                 # 지금 쓰는 벌
@@ -50,6 +52,11 @@ var time_mode := ""
 
 
 func _ready() -> void:
+	# 로딩 화면을 먼저 올리고 첫 장면을 바로 그린다(시스템 스플래시와 같은 그림). 게임은 그 뒤에서 만든다
+	if SPLASH.wanted():
+		splash = SPLASH.new()
+		add_child(splash)
+		splash.draw_now()
 	sharp_mat = ShaderMaterial.new()
 	sharp_mat.shader = preload("res://shaders/sharp_sprite.gdshader")
 	bird_mat = sharp_mat.duplicate()

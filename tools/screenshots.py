@@ -57,7 +57,19 @@ VARIANTS = [
     ("dusk_phone", "phone_1080x2400", ["--hour=18.5"]),
     ("night_phone", "phone_1080x2400", ["--hour=23"]),
     ("night_tablet_land", "tablet_2560x1600", ["--hour=23"]),
+    # 로딩 화면 (--splash=<초>에 멈춤): 첫 장면은 시스템 스플래시와, 이름이 뜬 마지막 장면은 디자인 화면과 견준다
+    ("splash_first_phone", "phone_1080x2400", ["--splash=0"]),
+    ("splash_reveal_phone", "phone_1080x2400", ["--splash=0.1"]),
+    ("splash_move_phone", "phone_1080x2400", ["--splash=0.25"]),
+    ("splash_ko_phone", "phone_1080x2400", ["--splash=0.6", "--lang=ko"]),
+    ("splash_en_phone", "phone_1080x2400", ["--splash=0.6", "--lang=en"]),
+    ("splash_ko_qhd", "qhd_1440x3120", ["--splash=0.6", "--lang=ko"]),
+    ("splash_ko_cover", "cover_904x2316", ["--splash=0.6", "--lang=ko"]),
+    ("splash_ko_fold", "fold_2160x2400", ["--splash=0.6", "--lang=ko"]),
+    ("splash_ko_tablet_land", "tablet_2560x1600", ["--splash=0.6", "--lang=ko"]),
 ]
+# 로딩 화면 캡처에만 쓰는 기기 (기기별 게임 화면 목록에는 넣지 않는다)
+EXTRA_DEVICES = [("qhd_1440x3120", 1440, 3120, 3.5)]
 
 
 def godot_path():
@@ -156,6 +168,26 @@ def ground_check():
     return ok
 
 
+def splash_check():
+    """로딩 화면: 폰(1080×2400, 2.625배)에서 이름까지 뜬 장면이 디자인 마지막 화면(art/splash/design/final_ko·en.png)과
+    화소까지 같은지, 첫 장면이 디자인의 시스템 스플래시 화면(first.png)과 같은 자리·크기인지 본다.
+    시스템은 그림을 부드럽게 늘리고 게임은 칸 경계만 섞어서 화소는 조금 다르니 3화소 흐린 뒤 평균 차이로 본다."""
+    from PIL import ImageFilter
+    ok = True
+    for lang in ("ko", "en"):
+        shot = np.array(Image.open(OUT / f"splash_{lang}_phone.png").convert("RGB")).astype(int)
+        ref = np.array(Image.open(ROOT / f"art/splash/design/final_{lang}.png").convert("RGB")).astype(int)
+        bad = int((np.abs(shot - ref).max(-1) > 0).sum())
+        ok &= bad == 0
+        print(f"{'ok ' if bad == 0 else '!! '} 로딩 화면 마지막({lang}): 디자인 화면과 {'같다' if bad == 0 else f'{bad}화소 다르다'}")
+    blur = lambda path: np.array(Image.open(path).convert("RGB").filter(ImageFilter.GaussianBlur(3))).astype(float)
+    d = np.abs(blur(OUT / "splash_first_phone.png") - blur(ROOT / "art/splash/design/first.png"))
+    first_ok = d.mean() < 0.5 and d.max() < 40
+    ok &= first_ok
+    print(f"{'ok ' if first_ok else '!! '} 로딩 화면 첫 장면: 시스템 스플래시 화면과 평균 {d.mean():.2f}, 가장 큰 차이 {d.max():.0f} (흐린 뒤)")
+    return ok
+
+
 def sprite_color_check():
     """도감 상세(까치를 크게 그린 화면)에 까치 그림의 색이 그대로 다 나오는지 본다.
     셰이더에서 그림 색을 두 번 곱하는 실수(어두워짐)를 잡으려는 검사다."""
@@ -200,7 +232,7 @@ def main():
         failed += (not ok) or bool(errors)
     names = [d[0] for d in chosen]
     if not args:
-        size = {d[0]: d[1:] for d in DEVICES}
+        size = {d[0]: d[1:] for d in DEVICES + EXTRA_DEVICES}
         for name, dev, vargs in VARIANTS:
             w, h, dens = size[dev]
             hour = [] if any(a.startswith("--hour=") for a in vargs) else ["--hour=12"]
@@ -211,10 +243,11 @@ def main():
     if not extra and any(d[0] == "phone_1080x2400" for d in chosen):
         failed += not color_check()
     if not args and not extra:
+        failed += not splash_check()
         failed += not sprite_color_check()
         failed += not bag_check()
         failed += not ground_check()
-    size = {d[0]: d[1:3] for d in DEVICES}
+    size = {d[0]: d[1:3] for d in DEVICES + EXTRA_DEVICES}
     dev_of = {v[0]: v[1] for v in VARIANTS}
     labels = {}
     for n in names:

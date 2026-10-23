@@ -14,7 +14,8 @@ if echo "$unit" | grep -q -E "SCRIPT ERROR|^ERROR|실패 [1-9]|단위 시험 0�
 python3 -I tools/perch_check.py | tail -n 5
 # 자체 시험: 가상 화면에서 입력을 흉내 내 가방 여닫기·카메라·셔터·배경 벌·뷰파인더·도감·뒤로 가기를 해 본다 (벌 세 가지를 다 거친다)
 # 태블릿은 세로로 시작해 가로로 돌려 본다(벌이 바뀌고 앉은 새를 다시 앉힌다)
-for dev in "1080x2400 2.625 portrait" "2400x2160 2.625 square" "1600x2560 2.0 portrait --rotate" "2560x1600 2.0 landscape"; do
+# 폰은 로딩 화면을 띄운 채 시작해서 눌러 넘기기부터 해 본다
+for dev in "1080x2400 2.625 portrait --splash_live" "2400x2160 2.625 square" "1600x2560 2.0 portrait --rotate" "2560x1600 2.0 landscape"; do
   set -- $dev
   out="$(xvfb-run -a -s "-screen 0 3200x3200x24" "$GODOT" --path game --rendering-driver opengl3 --audio-driver Dummy \
     --resolution "$1" -- --density="$2" --seed=7 --prewarm --hour=12 --fresh --save=user://selftest_save.json --expect_set="$3" ${4:-} --selftest 2>&1 || true)"

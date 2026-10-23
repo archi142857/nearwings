@@ -1,0 +1,65 @@
+{
+ "note": "칸 좌표는 캔버스(magpie_1x.png) 기준. reference는 디자인 마지막 화면(폰 1080×2400)의 자리다. tools/splash_extract.py가 디자인 시안 화면에서 뽑았다.",
+ "paper": "#efe6d2",
+ "ink": "#2e2922",
+ "canvas_cells": [
+  264,
+  357
+ ],
+ "icon_window": [
+  89,
+  40,
+  128
+ ],
+ "adaptive_window": [
+  57,
+  8,
+  192
+ ],
+ "magpie_bbox": [
+  8,
+  51,
+  256,
+  349
+ ],
+ "reference": {
+  "screen": [
+   1080,
+   2400
+  ],
+  "cell_px": 3,
+  "canvas_px": [
+   154,
+   482
+  ],
+  "name_top_px": 1640,
+  "name_cell_px": 8,
+  "first_circle_dp": 192
+ },
+ "names": {
+  "ko": {
+   "cells": [
+    46,
+    11
+   ],
+   "left_px": 356,
+   "top_px": 1640
+  },
+  "en": {
+   "cells": [
+    67,
+    13
+   ],
+   "left_px": 272,
+   "top_px": 1640
+  }
+ },
+ "mid": {
+  "cell_px": 3.414,
+  "back_alpha": 0.8198,
+  "canvas_px": [
+   58.1,
+   618.59
+  ]
+ }
+}

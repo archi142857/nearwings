@@ -2,6 +2,7 @@ extends Node
 ## 자체 시험 (--selftest): 실제 입력을 흉내 내서 가방 메뉴, 카메라, 셔터, 뷰파인더, 도감, 뒤로 가기를 차례로 해 본다.
 ## 실행: tools/check.sh 가 가상 화면에서 돌린다. 하나라도 틀리면 종료 코드 1.
 ## --expect_set=<벌 이름>을 주면 그 화면에서 그 벌을 골랐는지도 본다. --rotate면 화면을 돌려 본다.
+## --splash_live면 로딩 화면을 띄운 채 시작해서 눌러 넘기기부터 해 본다.
 
 var main: Node
 var failures: Array[String] = []
@@ -9,10 +10,28 @@ var failures: Array[String] = []
 
 func run(main_node: Node) -> void:
 	main = main_node
-	await _frames(15)
 	var vs: Vector2 = main.view_px
 	var cu: CanvasLayer = main.capture_ui
 	var bag: CanvasLayer = main.bag
+
+	# 0. (--splash_live) 로딩 화면: 켜면 덮여 있다가, 위로 밀면(누르면) 바로 사라지고 그 손가락은 게임에 가지 않는다
+	if is_instance_valid(main.splash):
+		var sp: CanvasLayer = main.splash
+		await _frames(4)
+		_check(is_instance_valid(sp) and sp.t < SplashPlan.FADE_START, "켜면 로딩 화면이 덮여 있다")
+		var frames := 0
+		_press(Vector2(vs.x * 0.5, vs.y * 0.62), true)
+		while is_instance_valid(sp) and frames < 60:
+			await _frames(1)
+			frames += 1
+			if frames <= 6:
+				_move(Vector2(vs.x * 0.5, vs.y * (0.62 - 0.06 * frames)), Vector2(0.0, -vs.y * 0.06))
+		_press(Vector2(vs.x * 0.5, vs.y * 0.26), false)
+		_check(not is_instance_valid(sp), "누르면 로딩 화면이 사라진다 (%d프레임)" % frames)
+		_check(frames <= ceili(SplashPlan.SKIP_FADE * 30.0) + 3, "누르고 %.2f초 안에 사라진다 (%d프레임)" % [SplashPlan.SKIP_FADE, frames])
+		await _wait(0.6)
+		_check(bag.is_closed(), "로딩 화면을 누른 손가락으로 가방이 열리지 않는다")
+	await _frames(15)
 
 	# 1. 기본 화면에는 뷰파인더와 셔터가 없고, 맨 아래에 가방 윗단이 보인다
 	_check(not cu.finder.visible and not cu.shutter.visible, "기본 화면에는 뷰파인더와 셔터가 없다")

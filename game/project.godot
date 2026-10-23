@@ -4,7 +4,10 @@ config_version=5
 
 [application]
 
-config/name="새바라기"
+config/name="NearWings"
+config/name_localized={
+"ko": "새바라기"
+}
 config/description="NearWings 시험판 (0단계)"
 config/version="0.1.0"
 run/main_scene="res://scenes/main.tscn"
